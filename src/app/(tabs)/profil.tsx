@@ -60,7 +60,36 @@ export default function ProfilScreen() {
         )}
       </View>
 
+      <Button
+        label="Engellenen Kullanıcılar"
+        onPress={() => router.push("/profil/engellenenler")}
+        variant="secondary"
+        style={styles.blockedUsersButton}
+      />
+      <Button
+        label="Gizlilik Politikası"
+        onPress={() => router.push("/gizlilik-politikasi")}
+        variant="secondary"
+        style={styles.legalButton}
+      />
+      <Button
+        label="Kullanım Koşulları"
+        onPress={() => router.push("/kullanim-kosullari")}
+        variant="secondary"
+        style={styles.legalButton}
+      />
+
       <Button label="Çıkış Yap" onPress={handleSignOut} variant="danger" style={styles.signOutButton} />
+
+      <AppText variant="caption" color={colors.textSecondary} style={styles.dangerZoneLabel}>
+        Tehlikeli Bölge
+      </AppText>
+      <Button
+        label="Hesabımı Sil"
+        onPress={() => router.push("/profil/hesap-sil")}
+        variant="danger"
+        style={styles.deleteAccountButton}
+      />
     </ScreenContainer>
   );
 }
@@ -108,7 +137,21 @@ const styles = StyleSheet.create({
   retryButton: {
     minWidth: 160,
   },
-  signOutButton: {
+  blockedUsersButton: {
     marginTop: spacing.xl,
+  },
+  legalButton: {
+    marginTop: spacing.md,
+  },
+  signOutButton: {
+    marginTop: spacing.lg,
+  },
+  dangerZoneLabel: {
+    textAlign: "center",
+    marginTop: spacing.xl,
+    marginBottom: spacing.sm,
+  },
+  deleteAccountButton: {
+    marginBottom: spacing.lg,
   },
 });

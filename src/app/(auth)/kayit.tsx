@@ -89,6 +89,22 @@ export default function KayitScreen() {
 
       <Button label="Kayıt Ol" onPress={handleSignUp} loading={isSubmitting} style={styles.button} />
 
+      <AppText variant="caption" color={colors.textSecondary} style={styles.consentText}>
+        Kayıt olarak{" "}
+        <Link href="/kullanim-kosullari" asChild>
+          <AppText variant="caption" color={colors.primary}>
+            Kullanım Koşulları
+          </AppText>
+        </Link>
+        {"'"}nı ve{" "}
+        <Link href="/gizlilik-politikasi" asChild>
+          <AppText variant="caption" color={colors.primary}>
+            Gizlilik Politikası
+          </AppText>
+        </Link>
+        {"'"}nı kabul etmiş olursunuz.
+      </AppText>
+
       <View style={styles.footer}>
         <AppText variant="body" color={colors.textSecondary}>
           Zaten hesabın var mı?{" "}
@@ -114,6 +130,9 @@ const styles = StyleSheet.create({
   button: {
     marginTop: spacing.sm,
     marginBottom: spacing.lg,
+  },
+  consentText: {
+    textAlign: "center",
   },
   footer: {
     flexDirection: "row",

@@ -1,0 +1,136 @@
+{
+  "lastUpdated": "24.08.2026",
+  "privacy": {
+    "title": "Gizlilik Politikası",
+    "sections": [
+      {
+        "title": "1. Kapsam",
+        "paragraphs": [
+          "Bu Gizlilik Politikası, Kavis mobil uygulamasını (\"Uygulama\") kullanırken hangi kişisel verilerinizin toplandığını, nasıl kullanıldığını ve haklarınızın neler olduğunu açıklar. Uygulamayı kullanarak bu politikayı kabul etmiş olursunuz."
+        ]
+      },
+      {
+        "title": "2. Topladığımız Veriler",
+        "paragraphs": [
+          "Hesap bilgileri: e-posta adresiniz, kullanıcı adınız, profilinize eklediğiniz görünen ad, biyografi ve motosiklet modeli.",
+          "Konum verisi: rotaları keşfederken ve \"Yakınımdaki\" filtresini kullanırken anlık (ön plan) konumunuz; Sürüş Kaydı özelliğini kullandığınızda, izin verdiğiniz sürece, arka planda da kaydedilen GPS rotanız; Canlı Takip ekranını açıp \"Konumumu Paylaş\"a bastığınızda, o ekran açıkken periyodik olarak paylaşılan anlık konumunuz.",
+          "Kullanıcı içeriği: oluşturduğunuz rotalar, işaretli noktalar (POI), rota puanlamaları/yorumları, forum soru ve cevapları, grup sürüşü sohbet mesajları ve içerik raporları.",
+          "Cihaz/teknik veriler: uygulama sürümü, işletim sistemi ve (ileride push bildirimleri etkinleştirildiğinde) cihazınıza özgü bir bildirim token'ı."
+        ]
+      },
+      {
+        "title": "3. Verilerinizi Neden Topluyoruz",
+        "paragraphs": [
+          "Hesabınızı oluşturmak ve kimliğinizi doğrulamak; rotaları, işaretli noktaları ve forumu size ve diğer kullanıcılara gösterebilmek; sürüş kaydı ve canlı takip özelliklerini çalıştırabilmek; topluluk güvenliğini korumak (içerik raporlama, kullanıcı engelleme); yasal yükümlülüklerimizi yerine getirmek."
+        ]
+      },
+      {
+        "title": "4. Üçüncü Taraf Hizmet Sağlayıcılar",
+        "paragraphs": [
+          "Supabase: hesap, veritabanı, dosya depolama ve gerçek zamanlı (Realtime) altyapımızı sağlar — tüm verileriniz Supabase üzerinde barındırılır.",
+          "Mapbox: harita görüntüleme ve harita üzerindeki konum gösterimi için kullanılır; harita etkileşiminiz sırasında yaklaşık konum bilgisi Mapbox'a iletilebilir.",
+          "Verileriniz reklam amacıyla üçüncü taraflarla paylaşılmaz veya satılmaz."
+        ]
+      },
+      {
+        "title": "5. Veri Saklama Süresi",
+        "paragraphs": [
+          "Verileriniz, hesabınız aktif olduğu sürece saklanır. Hesabınızı sildiğinizde (Profil → Hesabımı Sil), hesabınız ve tüm ilişkili verileriniz (rotalar, işaretli noktalar, forum içerikleriniz, sürüş kayıtlarınız ve yüklediğiniz dosyalar dahil) kalıcı olarak ve geri alınamaz şekilde silinir."
+        ]
+      },
+      {
+        "title": "6. Veri Güvenliği",
+        "paragraphs": [
+          "Verileriniz, veritabanı düzeyinde satır bazlı erişim kontrolleri (Row Level Security) ile korunur — bir kullanıcının yalnızca yetkili olduğu verilere erişebilmesi veritabanı tarafından garanti edilir. Bağlantılar şifrelenmiş (HTTPS/TLS) kanallar üzerinden yapılır."
+        ]
+      },
+      {
+        "title": "7. Haklarınız",
+        "paragraphs": [
+          "6698 sayılı Kişisel Verilerin Korunması Kanunu (KVKK) madde 11 ve ilgili mevzuat kapsamında; verilerinizin işlenip işlenmediğini öğrenme, işlenmişse buna ilişkin bilgi talep etme, işlenme amacını ve amacına uygun kullanılıp kullanılmadığını öğrenme, yurt içinde/yurt dışında aktarıldığı üçüncü kişileri bilme, eksik/yanlış işlenmişse düzeltilmesini isteme ve verilerinizin silinmesini/yok edilmesini isteme haklarına sahipsiniz.",
+          "Profil bilgilerinizi doğrudan Profil ekranından güncelleyebilir, hesabınızı ve tüm verilerinizi Profil → Hesabımı Sil ile kalıcı olarak silebilirsiniz. Diğer talepleriniz için aşağıdaki iletişim kanalını kullanabilirsiniz."
+        ]
+      },
+      {
+        "title": "8. Çocukların Gizliliği",
+        "paragraphs": [
+          "Uygulama, motosiklet sürüşüne yönelik bir topluluk uygulamasıdır ve 16 yaşın altındaki kişilere yönelik değildir. 16 yaşından küçük olduğunuzu düşünüyorsak hesabınızı kapatabiliriz."
+        ]
+      },
+      {
+        "title": "9. Politika Değişiklikleri",
+        "paragraphs": [
+          "Bu politikayı zaman zaman güncelleyebiliriz. Önemli değişikliklerde sizi uygulama içinden bilgilendireceğiz."
+        ]
+      },
+      {
+        "title": "10. İletişim",
+        "paragraphs": [
+          "Sorularınız için: [iletişim e-postanızı buraya ekleyin]."
+        ]
+      }
+    ]
+  },
+  "terms": {
+    "title": "Kullanım Koşulları",
+    "sections": [
+      {
+        "title": "1. Kabul",
+        "paragraphs": [
+          "Kavis mobil uygulamasını (\"Uygulama\") kullanarak bu Kullanım Koşulları'nı kabul etmiş olursunuz. Koşulları kabul etmiyorsanız Uygulamayı kullanmamalısınız."
+        ]
+      },
+      {
+        "title": "2. Hesap Sorumluluğu",
+        "paragraphs": [
+          "Hesabınızla ilgili bilgilerin doğruluğundan ve hesabınız üzerinden gerçekleştirilen tüm işlemlerden siz sorumlusunuz. Şifrenizi başkalarıyla paylaşmayın."
+        ]
+      },
+      {
+        "title": "3. Kullanıcı İçeriği",
+        "paragraphs": [
+          "Rotalar, işaretli noktalar, forum soru/cevapları, puanlamalar ve sohbet mesajları gibi paylaştığınız her türlü içeriğin (\"Kullanıcı İçeriği\") mülkiyeti size aittir. Kullanıcı İçeriği'ni paylaşarak, Uygulama içinde diğer kullanıcılara gösterebilmemiz için bize dünya çapında, münhasır olmayan, telif ücretsiz bir kullanım lisansı vermiş olursunuz.",
+          "Paylaştığınız içeriğin doğruluğundan ve üçüncü kişilerin haklarını ihlal etmediğinden siz sorumlusunuz."
+        ]
+      },
+      {
+        "title": "4. Yasaklı Davranışlar",
+        "paragraphs": [
+          "Uygunsuz, yanıltıcı/yanlış bilgi içeren veya spam niteliğinde içerik paylaşmak; başka kullanıcıları taciz etmek veya onlara zarar verecek şekilde davranmak; başkalarının hesaplarına yetkisiz erişmeye çalışmak yasaktır.",
+          "Bu kurallara aykırı içerikleri \"Bildir\" özelliğiyle bildirebilirsiniz; yeterli sayıda farklı kullanıcı tarafından raporlanan içerik topluluk moderasyon mekanizmamız tarafından otomatik olarak gizlenir."
+        ]
+      },
+      {
+        "title": "5. Moderasyon",
+        "paragraphs": [
+          "Kurallara aykırı bulduğumuz içerikleri kaldırma veya hesabınızı askıya alma/sonlandırma hakkını saklı tutarız."
+        ]
+      },
+      {
+        "title": "6. Sorumluluk Reddi",
+        "paragraphs": [
+          "Uygulamadaki rotalar, işaretli noktalar (ör. tehlikeli viraj, çakıllı yol uyarıları) ve forum içerikleri kullanıcılar tarafından oluşturulur ve doğrulanmamıştır. Bu bilgilerin güncelliğine, doğruluğuna veya eksiksizliğine güvenmeyin.",
+          "Motosiklet sürmek doğası gereği risk içerir. Uygulamayı kullanırken her zaman trafik kurallarına, hız sınırlarına ve kendi sürüş yeteneklerinize uygun şekilde, kendi sorumluluğunuzda sürüş yapın. Kavis, Uygulama üzerinden edinilen bilgilere dayanarak yapılan sürüşlerden kaynaklanan hiçbir zarardan sorumlu tutulamaz."
+        ]
+      },
+      {
+        "title": "7. Hesap Sonlandırma",
+        "paragraphs": [
+          "Hesabınızı istediğiniz zaman Profil → Hesabımı Sil ile kalıcı olarak silebilirsiniz. Bu koşulların ihlali durumunda hesabınızı sonlandırma hakkımız saklıdır."
+        ]
+      },
+      {
+        "title": "8. Değişiklikler",
+        "paragraphs": [
+          "Bu koşulları zaman zaman güncelleyebiliriz. Önemli değişikliklerde sizi uygulama içinden bilgilendireceğiz."
+        ]
+      },
+      {
+        "title": "9. İletişim",
+        "paragraphs": [
+          "Sorularınız için: [iletişim e-postanızı buraya ekleyin]."
+        ]
+      }
+    ]
+  }
+}

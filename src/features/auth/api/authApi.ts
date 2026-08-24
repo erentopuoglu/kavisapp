@@ -65,6 +65,29 @@ export async function signOut() {
   if (error) throw error;
 }
 
+async function extractFunctionErrorMessage(error: unknown, fallback: string): Promise<string> {
+  const withContext = error as { context?: Response; message?: string };
+  if (withContext.context) {
+    try {
+      const body = (await withContext.context.json()) as { error?: string };
+      if (body?.error) return body.error;
+    } catch {
+      // gövde okunamadı, aşağıdaki genel mesaja düş
+    }
+  }
+  return withContext.message ?? fallback;
+}
+
+// Hesabı ve tüm verilerini kalıcı olarak siler — delete-account Edge
+// Function'ı (service_role) çağırır, gerçek silme kararı orada verilir.
+export async function deleteAccount(): Promise<void> {
+  const { data, error } = await supabase.functions.invoke("delete-account");
+  if (error) {
+    throw new Error(await extractFunctionErrorMessage(error, "Hesap silinemedi."));
+  }
+  if (data?.error) throw new Error(data.error as string);
+}
+
 export async function fetchProfile(userId: string): Promise<Profile> {
   const { data, error } = await supabase.from("profiles").select("*").eq("id", userId).single();
   if (error) throw error;

@@ -120,6 +120,14 @@ export const useRecordingStore = create<RecordingState>((set, get) => ({
   },
 
   start: async (batterySaverMode: boolean) => {
+    // Native arka plan takibini state'i "recording" yapmadan ÖNCE
+    // başlatıyoruz — startBackgroundTracking reddedilirse (örn. Expo Go'da)
+    // buradan fırlayan hata çağırana (surus-kaydi.tsx → beginRecording)
+    // ulaşır ve store hiçbir zaman "kayıt başladı ama aslında takip
+    // çalışmıyor" gibi tutarsız bir duruma girmez.
+    const profile = batterySaverMode ? BATTERY_SAVER_TRACKING_PROFILE : NORMAL_TRACKING_PROFILE;
+    await startBackgroundTracking(LOCATION_TASK_NAME, profile);
+
     const startedAtMs = Date.now();
     set({
       status: "recording",
@@ -138,9 +146,6 @@ export const useRecordingStore = create<RecordingState>((set, get) => ({
       totalPoints: 0,
       batterySaverMode,
     });
-
-    const profile = batterySaverMode ? BATTERY_SAVER_TRACKING_PROFILE : NORMAL_TRACKING_PROFILE;
-    await startBackgroundTracking(LOCATION_TASK_NAME, profile);
   },
 
   ingestLocations: (locations: RawLocation[]) => {

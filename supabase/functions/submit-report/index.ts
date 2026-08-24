@@ -21,11 +21,11 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const RATE_LIMIT_PER_HOUR = 5;
 const HIDE_THRESHOLD = 3;
 
-// Faz 5'te forum eklenince buraya yeni content_type -> tablo eşlemeleri
-// eklenecek.
 const MODERATABLE_TABLES: Record<string, string> = {
   poi: "pois",
   group_ride_message: "group_ride_messages",
+  forum_question: "forum_questions",
+  forum_answer: "forum_answers",
 };
 
 function json(body: unknown, status = 200): Response {

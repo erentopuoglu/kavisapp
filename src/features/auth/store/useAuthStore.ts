@@ -1,7 +1,7 @@
 import type { Session } from "@supabase/supabase-js";
 import { create } from "zustand";
 
-import { fetchProfile, signOut as apiSignOut } from "@/features/auth/api/authApi";
+import { deleteAccount as apiDeleteAccount, fetchProfile, signOut as apiSignOut } from "@/features/auth/api/authApi";
 import type { Profile } from "@/features/auth/types";
 import { supabase } from "@/lib/supabase/client";
 
@@ -13,6 +13,7 @@ type AuthState = {
   init: () => () => void;
   refreshProfile: () => Promise<void>;
   signOut: () => Promise<void>;
+  deleteAccount: () => Promise<void>;
 };
 
 function describeError(err: unknown): string {
@@ -73,6 +74,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   signOut: async () => {
     await apiSignOut();
+    set({ session: null, profile: null, profileError: null });
+  },
+
+  deleteAccount: async () => {
+    await apiDeleteAccount();
     set({ session: null, profile: null, profileError: null });
   },
 }));

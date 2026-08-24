@@ -16,7 +16,7 @@ src/
     (auth)/               giriş, kayıt, şifremi unuttum
     (tabs)/                keşfet, harita, etkinlikler, sürüş kaydı, forum, profil
   features/               feature-based iş mantığı (auth, routes, recording,
-                           poi, group-rides, forum, moderation, profile)
+                           poi, group-rides, forum, blocks, moderation, profile)
     auth/
       api/                Supabase çağrıları
       store/              Zustand store (session, profile)
@@ -27,19 +27,35 @@ src/
   lib/
     supabase/             client.ts, types.ts (Database tipi)
     map/                  MapService.tsx — TEK harita soyutlama katmanı
-                           (Mapbox'a özgü kod sadece burada yaşar)
+                           (Mapbox'a özgü kod sadece burada yaşar).
+                           index.ts, Expo Go'da otomatik olarak
+                           MapService.expo-go.tsx'e (mock) düşer — bkz.
+                           "Expo Go ile geliştirme".
+  content/
+    legal.json             Gizlilik/Koşullar metinleri — TEK KAYNAK; hem
+                            uygulama ekranları hem web/build.mjs bunu okur.
 supabase/
   migrations/              0000_init_schema.sql — tüm tablolar + RLS
   tests/                   RLS smoke test script'leri
+  functions/               Edge Function'lar (submit-report, delete-account, ...)
+web/
+  (ayrı, framework'süz statik site — kavisapp.com/Cloudflare Pages için;
+  bkz. web/README.md)
 ```
 
 ### Harita soyutlaması
 
 Uygulama Mapbox kullanıyor, ancak hiçbir ekran `@rnmapbox/maps`'i doğrudan
-import etmiyor — hepsi `src/lib/map/MapService.tsx` üzerinden geçiyor
-(`AppMapView`, `AppMapMarker`). Mapbox'ın 25.000 MAU'luk ücretsiz sınırına
+import etmiyor — hepsi `src/lib/map/index.ts` üzerinden geçiyor (`AppMapView`,
+`AppMapMarker`, `AppMapPolyline`). Mapbox'ın 25.000 MAU'luk ücretsiz sınırına
 yaklaşılırsa, sağlayıcı değişimi (örn. MapLibre + MapTiler/self-host) sadece
-bu dosyanın yeniden yazılmasını gerektirir; geri kalan kod değişmez.
+`MapService.tsx`'in yeniden yazılmasını gerektirir; geri kalan kod değişmez.
+
+`index.ts` ayrıca çalışma zamanında Expo Go'da mı yoksa bir development
+build'te mi olduğumuza bakıp iki implementasyondan birini seçiyor:
+`MapService.tsx` (gerçek Mapbox) veya `MapService.expo-go.tsx` (Expo Go'da
+gerçek harita yerine veri özeti gösteren mock) — bkz. aşağıdaki "Expo Go ile
+geliştirme".
 
 ## Faz 0 — Kurulum ve Test
 
@@ -103,12 +119,13 @@ cp .env.example .env
 
 ### 5) Development Client ile çalıştırma
 
-Mapbox native modül içerdiği için **Expo Go çalışmaz** — bir Development
+Mapbox ve arka plan konum takibi gibi custom native modüller içerdiği için
+uygulamanın **tam işlevli hali Expo Go'da çalışmaz** — bir Development
 Client build'i gerekir:
 
 ```bash
 npx expo prebuild
-npx expo run:android   # veya: npx expo run:ios (macOS gerekir)
+npx expo run:android   # veya: npx expo run:ios (macOS + Xcode gerekir)
 ```
 
 Ardından geliştirme sırasında:
@@ -116,6 +133,64 @@ Ardından geliştirme sırasında:
 ```bash
 npm start
 ```
+
+Development Client build'i alacak donanımınız/hesabınız yoksa (emulator
+kuramıyorsanız, fiziksel Android cihazınız yoksa, Apple Developer Program
+ücretini ($99/yıl) ödemek istemiyorsanız) aşağıdaki "Expo Go ile geliştirme"
+bölümüne bakın — geliştirmenin büyük kısmı ücretsiz şekilde Expo Go'da
+sürdürülebilir.
+
+### 5b) Expo Go ile geliştirme (development client olmadan)
+
+`npx expo start` ile Expo Go üzerinden QR kod okutup çalıştırabilirsiniz —
+kurulum, hesap veya ücret gerektirmez. `src/lib/map/index.ts` çalışma
+zamanında Expo Go'da olduğunu algılayıp haritayı otomatik olarak mock'a
+düşürür, elle bir şey yapmanız gerekmez.
+
+**Expo Go'da çalışan (test edilebilir):**
+
+- Auth akışı (e-posta + Google OAuth), Supabase sorguları, Realtime, forum,
+  POI listesi/detayı, grup sürüşü sohbet ve katılımcı akışları.
+- Canlı Takip ekranındaki **foreground** konum paylaşımı
+  (`useLiveLocationSharing` — zaten sadece ekran açıkken çalışacak şekilde
+  tasarlandı, bkz. "Teknik Borç (Faz 4 ekleri)").
+- GPX dışa aktarma/paylaşma (`expo-file-system` yeni File/Paths API +
+  `expo-sharing`) ve içe aktarma (`expo-document-picker`) — ikisi de resmi
+  Expo dokümantasyonuna göre Expo Go'da destekleniyor.
+- Harita ekranları **açılır ve veri akışı doğrulanabilir**, ama gerçek harita
+  yerine bir özet kutusu görürsünüz (kaç çizgi/rota, kaç işaretçi render
+  edilmeye çalışıldığı, hesaplanan merkez koordinatı; `onMapPress` akışını
+  sahte bir koordinatla tetikleyen bir buton da var) — bkz.
+  `src/lib/map/MapService.expo-go.tsx`.
+
+**Expo Go'da çalışmayan / dikkat edilmesi gerekenler:**
+
+- **Gerçek harita render'ı:** `@rnmapbox/maps` Expo Go binary'sine gömülü
+  değil. Pan/zoom, katman stili, gerçek kullanıcı konumu ikonu gibi görsel
+  şeyleri görmek için Development Client şart.
+- **Sürüş kaydı (arka plan konum takibi):** "Sürüş Kaydı" ekranı
+  `Location.startLocationUpdatesAsync()` çağırıyor
+  (`src/lib/location/backgroundTracking.ts`). Resmi Expo dokümantasyonuna
+  göre bu API **hem iOS hem Android'de Expo Go'da desteklenmiyor** (iOS'ta
+  sadece Simulator'da çalışıyor, gerçek cihazda değil) — üstelik
+  `expo-location` bunun için hata fırlatmak yerine sadece bir konsol uyarısı
+  basıyor, yani native çağrı sessizce başarısız kalabilirdi.
+  `backgroundTracking.ts`, `isRunningInExpoGo()` ile bunu native çağrıyı hiç
+  denemeden önceden tespit edip anlaşılır bir hata fırlatıyor
+  ("Sürüş kaydı Expo Go'da çalışmıyor — Development Client build'i
+  gerekiyor."); bu hata "Sürüş Kaydı Başlat" ekranındaki mevcut
+  try/catch'e düşüp `Alert` olarak gösteriliyor. Yine de gerçek harita
+  render'ını ve fiili arka plan takibini test etmek için Development
+  Client gerekir.
+- **`expo-glass-effect`:** Şu an kod tabanında hiçbir yerde kullanılmıyor, bu
+  yüzden ona özel bir Expo Go mock'u eklenmedi. İleride kullanmaya
+  başladığınızda da muhtemelen ekstra işe gerek kalmayacak: modül resmi
+  olarak Expo Go'da destekleniyor ve zaten kendi içinde iOS 26'dan düşük
+  sürümlerde (Expo Go'nun çalıştığı çoğu gerçek cihaz dahil) normal `View`'a
+  fallback yapıyor.
+
+Native bir bağımlılık eklediğinizde veya yukarıdaki iki maddeyi test etmeniz
+gerektiğinde Development Client'a geçin (bkz. yukarıdaki madde 5).
 
 ### 6) Faz 0 Test Adımları (manuel)
 
@@ -548,6 +623,238 @@ Bu faz da JS + Edge Function + RLS — `expo prebuild` gerekmiyor.
   gerçekten çalıştırılıp doğrulanamadı — local Supabase'iniz varsa
   `supabase db reset` + `psql ... -f supabase/tests/0000_rls_smoke_tests.sql`
   ile siz doğrulayın.
+
+## Faz 5 — Kurulum ve Test
+
+### 1) Yeni migration
+
+```
+supabase/migrations/0007_faz5_forum_blocks.sql
+```
+
+`forum_questions_select_visible`/`forum_answers_select_visible` RLS
+politikalarını, görüntüleyenin engellediği kullanıcıların içeriğini de
+gizleyecek şekilde güncelliyor (bkz. aşağıdaki "Tasarım Kararları").
+
+### 2) Native değişiklik yok, ama `submit-report`'u yeniden deploy edin
+
+Bu faz için yeni bir Edge Function yazılmadı, ama var olan `submit-report`
+fonksiyonunun `MODERATABLE_TABLES` eşlemesi `forum_question`/`forum_answer`
+içermiyordu (Faz 3'ten kalma bir TODO) — forum içeriğini "Bildir" ile
+raporlamak bu düzeltme olmadan "Desteklenmeyen içerik türü" hatasıyla
+reddediliyordu. Düzeltildi; deploy edin:
+
+```bash
+supabase functions deploy submit-report
+```
+
+`expo prebuild` gerekmiyor, Metro çalışıyorsa geri kalanı için Fast Refresh
+yeterli.
+
+### Test Adımları (manuel)
+
+- [ ] **Forum** sekmesinde "+" ile yeni bir soru sorun (başlık, soru metni,
+      opsiyonel motosiklet modeli — profildeki modelinizle önceden dolu
+      gelmeli, opsiyonel virgülle ayrılmış etiketler) → listede görünmeli.
+- [ ] Arama kutusuna başlık/metin içinde geçen bir kelime yazın → liste
+      filtrelenmeli.
+- [ ] **İkinci bir hesapla** aynı soruyu açıp cevap yazın → soru sahibi
+      hesabında cevap görünmeli.
+- [ ] Soru sahibi hesabıyla bir cevabı **"En iyi cevap olarak işaretle"** →
+      yeşil "En İyi Cevap" rozeti görünmeli; tekrar basınca kaldırılmalı.
+- [ ] Kendi sorunuzu/cevabınızı **Sil** ile silin → listeden/detaydan
+      kaybolmalı.
+- [ ] **Başka bir kullanıcının** sorusunu/cevabını "Bildir" ile raporlayın
+      (aynı akış Faz 3/4'teki gibi 3 farklı raportörle gizlenir).
+- [ ] Başka bir kullanıcıyı soru/cevap detayından **"Kullanıcıyı Engelle"**
+      ile engelleyin → o kullanıcının soruları/cevapları hem Forum
+      listesinden hem soru detaylarından kaybolmalı.
+- [ ] **Profil → Engellenen Kullanıcılar** ekranında engellenen kullanıcı
+      görünmeli → **Kaldır** ile engeli kaldırın → içerikleri tekrar
+      görünür olmalı.
+- [ ] `npx tsc --noEmit` ve `npx expo lint` hatasız geçiyor.
+
+## Tasarım Kararları (Faz 5)
+
+- **Engelleme RLS'te, client filtresi değil:** `blocks` tablosu Faz 0'dan
+  beri duruyordu ama hiçbir select politikası ondan haberdar değildi.
+  `0007_faz5_forum_blocks.sql`, forum select politikalarına
+  `auth.uid()`'e özel bir `not exists (select 1 from blocks ...)` koşulu
+  ekliyor — bu projedeki "güvenlik kararı istemciye bırakılmaz" ilkesiyle
+  tutarlı (bkz. Faz 4'teki politika simetrisi düzeltmeleri). Tek yönlü:
+  A, B'yi engellerse B'nin içeriği A'dan gizlenir, A'nınki B'den gizlenmez.
+- **Kapsam sadece forum:** Engelleme bu fazda yalnızca soru/cevap
+  görünürlüğüne bağlandı; POI, rota ve grup sürüşü sohbeti henüz
+  engellemeyi dikkate almıyor (bkz. Teknik Borç).
+- **Soru/cevap düzenleme yok:** POI ve grup sürüşü mesajlarıyla aynı
+  minimalizm — sadece oluşturma + silme var, düzenleme yok.
+- **Etiketler ve motosiklet modeli serbest metin:** POI'nin sabit
+  `PoiType` enum'ının aksine, motosiklet modelleri/konular açık uçlu
+  olduğu için `bike_model_tag` ve `tags` serbest metin olarak bırakıldı.
+- **Edge Function gerekmedi:** Soru/cevap CRUD'u ve en iyi cevap işaretleme
+  tamamen mevcut RLS ile sahiplik bazlı korunuyor
+  (`forum_questions_update_own` zaten sadece soru sahibinin
+  `best_answer_id`'i güncelleyebilmesini sağlıyor, `validate_best_answer`
+  trigger'ı da bunun sadece o soruya ait bir cevabı işaret edebilmesini
+  garanti ediyor). Faz 3/4'teki Edge Function'lar RLS'in atomik ifade
+  edemediği kurallar (hız sınırı, kontenjan) içindi — burada öyle bir
+  kural yok.
+
+## Teknik Borç (Faz 5 ekleri)
+
+- **Engelleme sadece foruma uygulanıyor:** POI, rota ve grup sürüşü
+  sohbeti/canlı konum, engellenen kullanıcıların içeriğini hâlâ
+  gösteriyor. İleride aynı `not exists (select 1 from blocks ...)`
+  deseni bu tabloların select politikalarına da eklenebilir.
+- **Etiket taksonomisi/otomatik tamamlama yok:** Serbest metin etiketler
+  zamanla parçalanabilir (örn. "yamaha" vs "Yamaha" ayrı etiketler olarak
+  birikir). İleride önceden tanımlı bir liste veya normalize edilmiş
+  (küçük harfe çevrilmiş) etiketler değerlendirilebilir.
+- **Arama düz `ilike`:** Forum büyüdükçe (bkz. Faz 1'deki benzer not rota
+  aramasında) bir trigram indeksi (`pg_trgm`) gerekebilir; şu ölçekte
+  gerekli değil.
+
+## Faz 6 — Kurulum ve Test
+
+Bu faz, README'nin "Sonraki Fazlar" tablosundaki 4 maddeden ("gizlilik
+ekranları, hesap silme, FCM, beta derlemesi") sadece ilk ikisini kapsıyor.
+FCM (push bildirimleri) ve beta derlemesi/store gönderimi, gerçek bir
+Firebase projesi, EAS/Apple Developer/Google Play hesapları gerektirdiği
+için bilinçli olarak bu fazın dışında bırakıldı — bkz. aşağıdaki Teknik
+Borç bölümündeki adım adım liste.
+
+### 1) Yeni migration yok
+
+Hesap silme, mevcut `on delete cascade` ilişkilerine dayanıyor (bkz.
+Tasarım Kararları) — şema değişikliği gerekmedi.
+
+### 2) İki Edge Function deploy edin
+
+```bash
+supabase functions deploy delete-account
+supabase functions deploy submit-report
+```
+
+İkinci komut Faz 6'ya değil, Faz 5'e ait bir düzeltme için: `submit-report`
+fonksiyonunun `MODERATABLE_TABLES` eşlemesinde `forum_question`/
+`forum_answer` eksikti — forum içeriğini "Bildir" ile raporlamak bu
+düzeltme deploy edilmeden "Desteklenmeyen içerik türü" hatasıyla
+reddediliyordu. Faz 5'i zaten deploy ettiyseniz bu adımı atlamayın.
+
+### 3) Native değişiklik yok
+
+Bu faz sadece JS + yeni bir Edge Function — `expo prebuild` gerekmiyor.
+
+### 4) Store başvurusu için gizlilik politikası URL'si — kavisapp.com
+
+Google Play Console ve App Store Connect, uygulama içi bir ekran değil,
+**herkese açık, kalıcı bir URL** olarak gizlilik politikası istiyor. Bunun
+için `web/` altında Cloudflare Pages'e deploy edilecek, framework'süz basit
+bir statik site var: bir landing page (`/`) ve iki yasal sayfa
+(`/gizlilik`, `/kosullar`). Kurulum ve adım adım Cloudflare Pages deploy
+talimatları için **`web/README.md`**'ye bakın.
+
+Store konsollarına girilecek URL'ler:
+
+- **Gizlilik Politikası:** `https://kavisapp.com/gizlilik`
+- **Kullanım Koşulları:** `https://kavisapp.com/kosullar`
+
+**Tek kaynak:** `/gizlilik` ve `/kosullar` sayfalarının metni
+`src/content/legal.json`'dan üretiliyor — uygulama içindeki
+`gizlilik-politikasi.tsx`/`kullanim-kosullari.tsx` ekranları da AYNI
+JSON'ı okuyor (bkz. Tasarım Kararları). Metni güncellemek için sadece bu
+JSON'ı değiştirin; hem uygulama hem web sitesi otomatik senkron kalır.
+(Bu URL'ler yayına alınana kadar geçici olarak paylaşılmış bir Claude
+Artifact linki kullanılmıştı — artık kavisapp.com yayında olduğu için o
+link kullanılmamalı.)
+
+### Test Adımları (manuel)
+
+- [ ] **Kayıt Ol** ekranında "Kullanım Koşulları" ve "Gizlilik Politikası"
+      bağlantılarının ilgili ekranları açtığını doğrulayın.
+- [ ] **Profil** sekmesinde aynı iki ekrana ve **Engellenen Kullanıcılar**a
+      giden bağlantıların çalıştığını doğrulayın.
+- [ ] **Profil → Hesabımı Sil** ekranını açın → onay metnini doğru
+      yazmadan **Hesabımı Kalıcı Olarak Sil** butonunun pasif kaldığını
+      doğrulayın → doğru yazınca aktifleşmeli.
+- [ ] Test amaçlı bir hesapla silme işlemini tamamlayın → giriş ekranına
+      yönlendirilmeli → Supabase Dashboard → Authentication'da kullanıcı
+      ve Table Editor'de `profiles` (ve cascade ile `routes`, `pois`,
+      `forum_questions`, `recorded_rides`, `group_ride_participants`, ...)
+      satırlarının kalıcı olarak silindiğini doğrulayın.
+- [ ] Silinen kullanıcının `avatars/{user_id}/` ve `gpx-files/{user_id}/`
+      altında dosyası varsa, Storage'da bu dosyaların da silindiğini
+      doğrulayın.
+- [ ] `npx tsc --noEmit` ve `npx expo lint` hatasız geçiyor.
+
+## Tasarım Kararları (Faz 6)
+
+- **Hesap silme için yazılı onay, `Alert` değil:** POI/soru/cevap gibi tek
+  bir satırı silen işlemler `Alert.alert` ile onaylanıyor; hesap silme
+  geri alınamaz ve TÜM veriyi kapsadığı için `hesap-sil.tsx`'te ayrıca
+  kullanıcının tam olarak "HESABIMI SİL" yazmasını istiyoruz (buton bu
+  metin doğru girilene kadar pasif) — bu daha ağır sonuca daha ağır bir
+  onay adımı.
+- **Storage temizliği açıkça yapılıyor:** `on delete cascade` sadece
+  Postgres tablolarını kapsıyor, Storage nesnelerini kapsamıyor —
+  `delete-account` Edge Function'ı bu yüzden `auth.admin.deleteUser`'dan
+  ÖNCE `avatars/{user_id}/` ve `gpx-files/{user_id}/` altındaki dosyaları
+  best-effort olarak siliyor (bir bucket'ta listeleme/silme hatası olsa
+  bile kullanıcı hesabını silebilmeli).
+- **Gizlilik/Kullanım Koşulları ekranları `src/app` kökünde:** `profil/`
+  altındaki `engellenenler.tsx`/`hesap-sil.tsx`'in aksine, bu iki ekran
+  kayıt ekranından (oturum açılmadan) da erişilebilmeli — bu yüzden
+  `profil/` yerine üst seviyede.
+- **Metinler taslak, hukuki tavsiye değil:** İki ekranda da ve
+  kavisapp.com'daki karşılıklarında belirgin bir uyarı banner'ı var. Gerçek
+  bir mağaza başvurusundan önce bir hukuk danışmanına gösterilmesi ve
+  içindeki iletişim bilgisi yer tutucularının doldurulması gerekiyor.
+- **Yasal metinler `src/content/legal.json`'da, ekranlarda veya web
+  sayfalarında değil:** Hem `gizlilik-politikasi.tsx`/`kullanim-kosullari.tsx`
+  hem `web/build.mjs` aynı JSON'ı okuyor — metin üç yerde ayrı ayrı
+  tutulsaydı (uygulama × 2 ekran + statik site) güncellemede birinin
+  unutulması kaçınılmaz olurdu. `routes.path_geojson` gibi diğer
+  "tek kaynak, birden çok tüketici" desenleriyle aynı mantık.
+- **`web/`, ayrı bir repo değil, aynı repoda bağımsız bir klasör:** İçeriğin
+  tek kaynaktan senkron kalabilmesi için (yukarıdaki madde) web sitesinin
+  `src/content/legal.json`'a erişebilmesi gerekiyor — ayrı bir repoda bu,
+  ya bir git submodule ya da elle kopyalama gerektirirdi. Cloudflare Pages
+  "Root directory" ayarı (`web`) monorepo alt klasörlerini native olarak
+  destekliyor, bu yüzden ek karmaşıklığa gerek kalmadı. Site framework'süz
+  (düz HTML/CSS + bağımlılıksız bir Node script) — RN uygulamasının build
+  zincirinden tamamen izole, birbirini bozma riski yok.
+
+## Teknik Borç (Faz 6 ekleri)
+
+- **FCM push bildirimleri yapılmadı** — kullanıcıyla birlikte bilinçli
+  olarak bu fazın dışında bırakıldı. Sırasıyla gereken adımlar:
+  1. Bir Firebase projesi oluşturun, Android uygulamasını ekleyip
+     `google-services.json`'ı indirin.
+  2. `npx expo install expo-notifications` ile bağımlılığı ve
+     `app.config.ts`'e ilgili config plugin'i ekleyin.
+  3. `eas login` + `eas init` ile projeyi gerçek bir EAS projesine bağlayın
+     (şu an `app.config.ts`'teki `EAS_PROJECT_ID` boş) — bu, push token
+     kaydı için şart.
+  4. `eas credentials` ile FCM V1 servis hesabı anahtarını yükleyin (eski
+     "legacy server key" ile gönderim Google tarafından kaldırıldı).
+  5. Hangi olaylarda bildirim gönderileceğine karar verin (örn. sorunuza
+     yeni cevap geldi, grup sürüşü katılım isteğiniz onaylandı, yeni sohbet
+     mesajı) ve bunun için bir `push_tokens` tablosu + gönderim mantığını
+     tetikleyen DB trigger'ları/Edge Function'ları tasarlayın.
+  Bu adımlar tamamlandığında istemci tarafı (izin isteme + token kaydı) ve
+  sunucu tarafı (tetikleyiciler) kodu ayrı bir oturumda yazılabilir.
+- **Beta derlemesi/store gönderimi yapılmadı** — `eas build --profile
+  preview` çalıştırmak, TestFlight'a (Apple Developer Program, $99/yıl) ve
+  Play Console'a (tek seferlik $25) hesap gerektiriyor; ikisi de bu ortamda
+  yok. `eas.json`'daki `preview`/`production` profilleri zaten hazır —
+  hesaplar kurulunca `eas build --profile preview` ile ilk beta derlemesi
+  alınabilir.
+- **Gizlilik Politikası/Kullanım Koşulları içindeki iletişim e-postası yer
+  tutucu:** Gerçek bir destek/iletişim adresiyle doldurulmalı.
+- **Avatar yükleme özelliği hâlâ yok:** `avatars` bucket'ı Faz 0'dan beri
+  şemada duruyor ama hiçbir ekran ona dosya yüklemiyor — Gizlilik
+  Politikası'ndaki "profil bilgileri" ifadesi bunu bugün için kapsamıyor,
+  özellik eklenirse politika metni güncellenmeli.
 
 ## Tasarım Kararları (Faz 1)
 
