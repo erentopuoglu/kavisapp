@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Alert, Modal, Pressable, StyleSheet, View } from "react-native";
+import { Alert, Modal, Pressable, ScrollView, StyleSheet, View } from "react-native";
 
 import { submitReport } from "@/features/moderation/api/reportApi";
 import { REPORT_REASONS, type ReportContentType } from "@/features/moderation/types";
@@ -49,43 +49,45 @@ export function ReportModal({ visible, contentType, contentId, onClose, onSubmit
     <Modal visible={visible} animationType="slide" transparent onRequestClose={handleClose}>
       <View style={styles.overlay}>
         <View style={styles.card}>
-          <AppText variant="subtitle" style={styles.title}>
-            İçeriği Bildir
-          </AppText>
+          <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+            <AppText variant="subtitle" style={styles.title}>
+              İçeriği Bildir
+            </AppText>
 
-          {REPORT_REASONS.map((option) => {
-            const active = selectedReason === option.value;
-            return (
-              <Pressable
-                key={option.value}
-                style={[styles.reasonRow, active && styles.reasonRowActive]}
-                onPress={() => setSelectedReason(option.value)}
-              >
-                <View style={[styles.radio, active && styles.radioActive]} />
-                <AppText variant="body">{option.label}</AppText>
-              </Pressable>
-            );
-          })}
+            {REPORT_REASONS.map((option) => {
+              const active = selectedReason === option.value;
+              return (
+                <Pressable
+                  key={option.value}
+                  style={[styles.reasonRow, active && styles.reasonRowActive]}
+                  onPress={() => setSelectedReason(option.value)}
+                >
+                  <View style={[styles.radio, active && styles.radioActive]} />
+                  <AppText variant="body">{option.label}</AppText>
+                </Pressable>
+              );
+            })}
 
-          <TextField
-            label="Detay (opsiyonel)"
-            value={details}
-            onChangeText={setDetails}
-            placeholder="Ek bilgi verin"
-            multiline
-            numberOfLines={3}
-            style={styles.detailsInput}
-          />
+            <TextField
+              label="Detay (opsiyonel)"
+              value={details}
+              onChangeText={setDetails}
+              placeholder="Ek bilgi verin"
+              multiline
+              numberOfLines={3}
+              style={styles.detailsInput}
+            />
 
-          <Button
-            label="Gönder"
-            onPress={handleSubmit}
-            disabled={!selectedReason}
-            loading={submitting}
-            variant="danger"
-            style={styles.submitButton}
-          />
-          <Button label="Vazgeç" onPress={handleClose} variant="secondary" />
+            <Button
+              label="Gönder"
+              onPress={handleSubmit}
+              disabled={!selectedReason}
+              loading={submitting}
+              variant="danger"
+              style={styles.submitButton}
+            />
+            <Button label="Vazgeç" onPress={handleClose} variant="secondary" />
+          </ScrollView>
         </View>
       </View>
     </Modal>

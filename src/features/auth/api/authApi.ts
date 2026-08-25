@@ -25,6 +25,28 @@ export async function signInWithEmail(email: string, password: string) {
   return data;
 }
 
+// Kullanıcı adıyla giriş — e-postayı hiç görmüyoruz, login-with-username
+// Edge Function'ı username'i sunucu içinde e-postaya çözüp şifreyi orada
+// doğruluyor, bize sadece session token'larını dönüyor (bkz. fonksiyonun
+// kendi yorumları — timing-attack koruması dahil).
+export async function signInWithUsername(username: string, password: string) {
+  const { data, error } = await supabase.functions.invoke("login-with-username", {
+    body: { username, password },
+  });
+  if (error) {
+    throw new Error(await extractFunctionErrorMessage(error, "Kullanıcı adı veya şifre hatalı."));
+  }
+  if (data?.error || !data?.access_token || !data?.refresh_token) {
+    throw new Error((data?.error as string) ?? "Kullanıcı adı veya şifre hatalı.");
+  }
+
+  const { error: sessionError } = await supabase.auth.setSession({
+    access_token: data.access_token,
+    refresh_token: data.refresh_token,
+  });
+  if (sessionError) throw sessionError;
+}
+
 export async function sendPasswordResetEmail(email: string) {
   const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
   if (error) throw error;

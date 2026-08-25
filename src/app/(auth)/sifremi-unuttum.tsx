@@ -1,6 +1,6 @@
 import { router } from "expo-router";
 import { useState } from "react";
-import { Alert, StyleSheet, View } from "react-native";
+import { Alert, ScrollView, StyleSheet, View } from "react-native";
 
 import { sendPasswordResetEmail } from "@/features/auth/api/authApi";
 import { AppText } from "@/shared/components/AppText";
@@ -35,23 +35,25 @@ export default function SifremiUnuttumScreen() {
 
   return (
     <ScreenContainer>
-      <View style={styles.header}>
-        <AppText variant="title">Şifremi Unuttum</AppText>
-        <AppText variant="body" color={colors.textSecondary} style={styles.subtitle}>
-          Kayıtlı e-posta adresini gir, sana bir sıfırlama bağlantısı gönderelim.
-        </AppText>
-      </View>
+      <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+        <View style={styles.header}>
+          <AppText variant="title">Şifremi Unuttum</AppText>
+          <AppText variant="body" color={colors.textSecondary} style={styles.subtitle}>
+            Kayıtlı e-posta adresini gir, sana bir sıfırlama bağlantısı gönderelim.
+          </AppText>
+        </View>
 
-      <TextField
-        label="E-posta"
-        autoCapitalize="none"
-        keyboardType="email-address"
-        value={email}
-        onChangeText={setEmail}
-        placeholder="ornek@eposta.com"
-      />
+        <TextField
+          label="E-posta"
+          autoCapitalize="none"
+          keyboardType="email-address"
+          value={email}
+          onChangeText={setEmail}
+          placeholder="ornek@eposta.com"
+        />
 
-      <Button label="Sıfırlama Bağlantısı Gönder" onPress={handleSubmit} loading={isSubmitting} />
+        <Button label="Sıfırlama Bağlantısı Gönder" onPress={handleSubmit} loading={isSubmitting} />
+      </ScrollView>
     </ScreenContainer>
   );
 }

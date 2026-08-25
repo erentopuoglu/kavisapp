@@ -45,3 +45,4 @@ example
 
 # Supabase CLI local cache (link metadata, connection strings)
 supabase/.temp/
+.idea/

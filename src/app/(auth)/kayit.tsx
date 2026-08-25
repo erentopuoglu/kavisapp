@@ -1,6 +1,6 @@
 import { Link, router } from "expo-router";
 import { useState } from "react";
-import { Alert, StyleSheet, View } from "react-native";
+import { Alert, ScrollView, StyleSheet, View } from "react-native";
 
 import { signUpWithEmail } from "@/features/auth/api/authApi";
 import { AppText } from "@/shared/components/AppText";
@@ -57,64 +57,66 @@ export default function KayitScreen() {
 
   return (
     <ScreenContainer>
-      <View style={styles.header}>
-        <AppText variant="title">Hesap Oluştur</AppText>
-        <AppText variant="body" color={colors.textSecondary} style={styles.subtitle}>
-          Topluluğa katıl, rotanı paylaş.
+      <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+        <View style={styles.header}>
+          <AppText variant="title">Hesap Oluştur</AppText>
+          <AppText variant="body" color={colors.textSecondary} style={styles.subtitle}>
+            Topluluğa katıl, rotanı paylaş.
+          </AppText>
+        </View>
+
+        <TextField
+          label="Kullanıcı adı"
+          autoCapitalize="none"
+          value={username}
+          onChangeText={setUsername}
+          placeholder="orn_kullanici_adi"
+        />
+        <TextField
+          label="E-posta"
+          autoCapitalize="none"
+          keyboardType="email-address"
+          value={email}
+          onChangeText={setEmail}
+          placeholder="ornek@eposta.com"
+        />
+        <TextField
+          label="Şifre"
+          secureTextEntry
+          value={password}
+          onChangeText={setPassword}
+          placeholder="en az 8 karakter"
+        />
+
+        <Button label="Kayıt Ol" onPress={handleSignUp} loading={isSubmitting} style={styles.button} />
+
+        <AppText variant="caption" color={colors.textSecondary} style={styles.consentText}>
+          Kayıt olarak{" "}
+          <Link href="/kullanim-kosullari" asChild>
+            <AppText variant="caption" color={colors.primary}>
+              Kullanım Koşulları
+            </AppText>
+          </Link>
+          {"'"}nı ve{" "}
+          <Link href="/gizlilik-politikasi" asChild>
+            <AppText variant="caption" color={colors.primary}>
+              Gizlilik Politikası
+            </AppText>
+          </Link>
+          {"'"}nı kabul etmiş olursunuz.
         </AppText>
-      </View>
 
-      <TextField
-        label="Kullanıcı adı"
-        autoCapitalize="none"
-        value={username}
-        onChangeText={setUsername}
-        placeholder="orn_kullanici_adi"
-      />
-      <TextField
-        label="E-posta"
-        autoCapitalize="none"
-        keyboardType="email-address"
-        value={email}
-        onChangeText={setEmail}
-        placeholder="ornek@eposta.com"
-      />
-      <TextField
-        label="Şifre"
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-        placeholder="en az 8 karakter"
-      />
-
-      <Button label="Kayıt Ol" onPress={handleSignUp} loading={isSubmitting} style={styles.button} />
-
-      <AppText variant="caption" color={colors.textSecondary} style={styles.consentText}>
-        Kayıt olarak{" "}
-        <Link href="/kullanim-kosullari" asChild>
-          <AppText variant="caption" color={colors.primary}>
-            Kullanım Koşulları
+        <View style={styles.footer}>
+          <AppText variant="body" color={colors.textSecondary}>
+            Zaten hesabın var mı?{" "}
           </AppText>
-        </Link>
-        {"'"}nı ve{" "}
-        <Link href="/gizlilik-politikasi" asChild>
-          <AppText variant="caption" color={colors.primary}>
-            Gizlilik Politikası
-          </AppText>
-        </Link>
-        {"'"}nı kabul etmiş olursunuz.
-      </AppText>
-
-      <View style={styles.footer}>
-        <AppText variant="body" color={colors.textSecondary}>
-          Zaten hesabın var mı?{" "}
-        </AppText>
-        <Link href="/(auth)/giris" asChild>
-          <AppText variant="bodyMedium" color={colors.primary}>
-            Giriş yap
-          </AppText>
-        </Link>
-      </View>
+          <Link href="/(auth)/giris" asChild>
+            <AppText variant="bodyMedium" color={colors.primary}>
+              Giriş yap
+            </AppText>
+          </Link>
+        </View>
+      </ScrollView>
     </ScreenContainer>
   );
 }

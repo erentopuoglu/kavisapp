@@ -50,6 +50,7 @@ export interface Database {
           bio: string | null;
           bike_model: string | null;
           is_banned: boolean;
+          is_admin: boolean;
           created_at: string;
           updated_at: string;
         };

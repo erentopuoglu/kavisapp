@@ -1,5 +1,6 @@
+import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { ActivityIndicator, StyleSheet, View } from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
 
 import { useAuthStore } from "@/features/auth/store/useAuthStore";
 import { AppText } from "@/shared/components/AppText";
@@ -59,6 +60,16 @@ export default function ProfilScreen() {
           </View>
         )}
       </View>
+
+      {profile?.is_admin ? (
+        <Pressable style={styles.moderationRow} onPress={() => router.push("/profil/moderasyon")}>
+          <Ionicons name="shield-checkmark-outline" size={18} color={colors.primary} />
+          <AppText variant="bodyMedium" color={colors.primary} style={styles.moderationText}>
+            Moderasyon
+          </AppText>
+          <Ionicons name="chevron-forward" size={18} color={colors.primary} />
+        </Pressable>
+      ) : null}
 
       <Button
         label="Engellenen Kullanıcılar"
@@ -136,6 +147,20 @@ const styles = StyleSheet.create({
   },
   retryButton: {
     minWidth: 160,
+  },
+  moderationRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.primaryMuted,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    padding: spacing.md,
+    marginTop: spacing.xl,
+  },
+  moderationText: {
+    flex: 1,
+    marginLeft: spacing.sm,
   },
   blockedUsersButton: {
     marginTop: spacing.xl,

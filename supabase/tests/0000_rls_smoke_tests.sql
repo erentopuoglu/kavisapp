@@ -19,6 +19,11 @@
 -- veya `psql` ile doğrudan bağlantı) — bu yüzden anon/authenticated rolüne
 -- geçişleri `SET LOCAL ROLE` + `SET LOCAL request.jwt.claims` ile simüle
 -- ediyoruz (Supabase'in auth.uid() fonksiyonunun okuduğu ayar budur).
+--
+-- Bu dosya sadece SQL/RLS'i kapsar. Edge Function'ların HTTP davranışını
+-- (örn. login-with-username'in yanlış şifre/var olmayan kullanıcı adı
+-- senaryoları) psql'den test edemeyiz — onun için ayrı, curl tabanlı bir
+-- script var: 0001_login_with_username_smoke_test.sh.
 -- =====================================================================
 
 begin;
@@ -52,6 +57,22 @@ returns void language plpgsql as $$
 begin
   perform set_config('request.jwt.claims', '', true);
   set local role anon;
+end;
+$$;
+
+-- Claims'i temizleyip rolü sıfırlayan (superuser bağlantısına dönen)
+-- yardımcı — sadece service_role'ün yapabileceği bir yazımı (is_admin/
+-- is_hidden'ı elle true yapmak gibi) simüle etmek için kullanılıyor.
+-- Guard trigger'lar `auth.role() <> 'service_role'` kontrolü yapıyor;
+-- claims temizken auth.role() NULL döner, `NULL <> 'service_role'` de
+-- NULL (plpgsql'de false muamelesi görür) olduğundan guard devreye
+-- girmez — dosyanın en başındaki (herhangi bir act_as çağrısından önceki)
+-- auth.users insert'lerinin de zaten dayandığı mekanizma budur.
+create or replace function pg_temp.act_as_service()
+returns void language plpgsql as $$
+begin
+  perform set_config('request.jwt.claims', '', true);
+  reset role;
 end;
 $$;
 
@@ -411,6 +432,112 @@ begin
   end if;
 
   raise notice 'PASS: group_ride_messages üyelik + sel koruması + iptal kilidi testleri geçti.';
+end $$;
+
+-- ---------------------------------------------------------------------
+-- 9) ADMIN / MODERASYON
+-- ---------------------------------------------------------------------
+-- NOT: admin-manage-user/admin-moderate-content Edge Function'ları Deno
+-- HTTP fonksiyonları — bu SQL script'inden çağrılamazlar. "Edge
+-- Function'ı admin olmadan çağıramaz" gereksinimi, o fonksiyonların
+-- yetkisinin TAMAMEN dayandığı profiles.is_admin alanının forge
+-- edilemediğini (aşağıdaki guard trigger testi) doğrulayarak SQL
+-- seviyesinde karşılanıyor — fonksiyonun HTTP davranışı bu testin
+-- kapsamı dışında.
+do $$
+declare
+  user_a_id uuid := '00000000-0000-0000-0000-0000000000aa';
+  user_b_id uuid := '00000000-0000-0000-0000-0000000000bb';
+  user_c_id uuid := '00000000-0000-0000-0000-0000000000cc';
+  new_poi_id uuid;
+  is_still_admin boolean;
+  visible_count int;
+begin
+  -- Test kullanıcısı C (admin olacak).
+  insert into auth.users (id, email, encrypted_password, email_confirmed_at, raw_user_meta_data)
+  values (user_c_id, 'test-user-c@kavis.test', crypt('test-password-c', gen_salt('bf')), now(), '{"username":"test_user_c"}'::jsonb)
+  on conflict (id) do nothing;
+
+  -- C kendini admin yapmaya çalışır — guard trigger engellemeli (tıpkı
+  -- is_banned testindeki gibi).
+  perform pg_temp.act_as(user_c_id);
+  update profiles set is_admin = true where id = user_c_id;
+  select is_admin into is_still_admin from profiles where id = user_c_id;
+  if is_still_admin then
+    raise exception 'FAIL(profiles): kullanıcı kendi is_admin alanını true yapabildi!';
+  end if;
+
+  -- Gerçek admin ataması — sadece service_role (Edge Function) yapabilir,
+  -- burada act_as_service() ile simüle ediyoruz.
+  perform pg_temp.act_as_service();
+  update profiles set is_admin = true where id = user_c_id;
+
+  -- A bir POI oluşturur, service_role onu gizli işaretler (submit-report'un
+  -- otomatik gizlemesini veya admin-moderate-content'in 'hide' aksiyonunu
+  -- simüle ediyor).
+  perform pg_temp.act_as(user_a_id);
+  insert into pois (creator_id, type, location, title)
+  values (user_a_id, 'gas_station', st_geogfromtext('POINT(29.4 41.4)'), 'Test Gizlenecek Benzinlik')
+  returning id into new_poi_id;
+
+  perform pg_temp.act_as_service();
+  update pois set is_hidden = true where id = new_poi_id;
+
+  -- Sahibi olmayan normal kullanıcı (B) gizli POI'yi göremez.
+  perform pg_temp.act_as(user_b_id);
+  select count(*) into visible_count from pois where id = new_poi_id;
+  if visible_count <> 0 then
+    raise exception 'FAIL(pois): normal kullanıcı başkasının gizli POI''sini görebildi!';
+  end if;
+
+  -- Admin (C) aynı gizli POI'yi görebilir.
+  perform pg_temp.act_as(user_c_id);
+  select count(*) into visible_count from pois where id = new_poi_id;
+  if visible_count = 0 then
+    raise exception 'FAIL(pois): admin gizli POI''yi göremiyor!';
+  end if;
+
+  -- B, bu POI hakkında bir rapor oluşturur (kendi raporu, normal insert).
+  perform pg_temp.act_as(user_b_id);
+  insert into reports (reporter_id, content_type, content_id, reason)
+  values (user_b_id, 'poi', new_poi_id, 'inappropriate');
+
+  -- A (raportör değil, POI sahibi ama raporun kendisiyle ilgisi yok)
+  -- B'nin raporunu göremez.
+  perform pg_temp.act_as(user_a_id);
+  select count(*) into visible_count from reports where content_id = new_poi_id;
+  if visible_count <> 0 then
+    raise exception 'FAIL(reports): normal kullanıcı başkasının raporunu görebildi!';
+  end if;
+
+  -- Admin (C) raporu görebilir.
+  perform pg_temp.act_as(user_c_id);
+  select count(*) into visible_count from reports where content_id = new_poi_id;
+  if visible_count = 0 then
+    raise exception 'FAIL(reports): admin raporları göremiyor!';
+  end if;
+
+  -- Banlı kullanıcı yeni içerik oluşturamaz (0009_admin_moderation.sql'in
+  -- insert politikalarına eklediği is_current_user_banned() kontrolü).
+  perform pg_temp.act_as_service();
+  update profiles set is_banned = true where id = user_b_id;
+
+  perform pg_temp.act_as(user_b_id);
+  begin
+    insert into pois (creator_id, type, location, title)
+    values (user_b_id, 'rest_stop', st_geogfromtext('POINT(29.5 41.5)'), 'Banlı Kullanıcının POI''si');
+    raise exception 'FAIL(pois): banlı kullanıcı yeni POI oluşturabildi!';
+  exception when insufficient_privilege then
+    null; -- beklenen davranış
+  end;
+
+  -- Temizlik: B'yi tekrar banlı olmaktan çıkar (dosyanın geri kalanı
+  -- rollback ile temizleniyor olsa da, aynı transaction içinde B'ye
+  -- bağımlı başka bir test bölümü varsa etkilenmesin diye).
+  perform pg_temp.act_as_service();
+  update profiles set is_banned = false where id = user_b_id;
+
+  raise notice 'PASS: admin/moderasyon RLS testleri geçti (is_admin guard, gizli içerik + rapor görünürlüğü, banlı kullanıcı insert engeli).';
 end $$;
 
 raise notice '=== TÜM RLS SMOKE TESTLERİ BAŞARIYLA GEÇTİ ===';

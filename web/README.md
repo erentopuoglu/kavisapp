@@ -21,7 +21,7 @@ ekranlarıyla aynı JSON**. Metni güncellemeniz gerektiğinde:
 Uygulama ekranı ile web sayfası otomatik olarak aynı kalır; ikisini ayrı
 ayrı güncellemeniz gerekmez.
 
-`index.html` (landing page metni, "Kavis Hakkında" taslağı) bu JSON'a
+`index.html` (landing page metni, "Kavis Hakkında" bölümü) bu JSON'a
 bağlı değil — kendi içinde sabit, çünkü uygulama içinde karşılığı olan
 bir ekran yok.
 
@@ -213,8 +213,5 @@ web/
 - **Instagram `@kavisapp`, `info@kavisapp.com`:** Header/footer'da bu
   handle/adrese linkleniyor — gerçekten var olduklarından emin olun
   (yoksa oluşturun), yoksa ziyaretçi kırık bir bağlantıya tıklar.
-- **"Kavis Hakkında" bölümü:** `index.html`'de `.about-placeholder`
-  içinde köşeli parantezli taslak metin var, gerçek kurucu hikayenizle
-  değiştirin (aynı dosyada, `id="hakkinda"` bölümünü arayın).
 - **Gizlilik/Koşullar içindeki iletişim e-postası:** `src/content/legal.json`'daki
   `[iletişim e-postanızı buraya ekleyin]` yer tutucusu.

@@ -648,15 +648,15 @@ body.page-home {
   text-wrap: balance;
 }
 
-.about-placeholder {
+.about-card {
   max-width: 68ch;
-  border: 1px dashed var(--border-strong);
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: clamp(18px, 3vw, 26px);
   background: var(--surface);
 }
 
-.about-placeholder .about-tag {
+.about-card .about-tag {
   display: inline-block;
   font-family: "IBM Plex Mono", ui-monospace, monospace;
   font-size: 11.5px;
@@ -666,13 +666,43 @@ body.page-home {
   margin-bottom: 14px;
 }
 
-.about-placeholder p {
-  margin: 0 0 12px;
+.about-card p {
+  margin: 0 0 14px;
   color: var(--text-secondary);
+}
+.about-card p:last-of-type {
+  margin-bottom: 0;
+}
+
+.about-card em {
+  color: var(--text);
   font-style: italic;
 }
-.about-placeholder p:last-child {
-  margin-bottom: 0;
+
+.about-card a {
+  font-weight: 500;
+}
+
+.about-signature {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px dashed var(--border);
+}
+
+.about-signature .about-name {
+  font-family: "Oswald", "Arial Narrow", sans-serif;
+  font-weight: 600;
+  font-size: 16px;
+  letter-spacing: 0.01em;
+  color: var(--text);
+}
+
+.about-signature .about-role {
+  margin-top: 2px;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 12px;
+  letter-spacing: 0.03em;
+  color: var(--text-tertiary);
 }
 
 /* ---------------------------------------------------------------------

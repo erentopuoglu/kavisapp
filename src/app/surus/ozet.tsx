@@ -104,7 +104,7 @@ export default function SurusOzetScreen() {
     <>
       <Stack.Screen options={{ title: "Sürüş Özeti", headerShown: true }} />
       <ScreenContainer padded={false}>
-        <ScrollView showsVerticalScrollIndicator={false}>
+        <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
           <View style={styles.mapWrapper}>
             <AppMapView fitToCoordinates={points}>
               <AppMapPolyline id="ride-summary" coordinates={points} />
@@ -219,6 +219,7 @@ function RoutePickerModal({
               data={routes}
               keyExtractor={(item) => item.id}
               style={styles.pickerList}
+              keyboardShouldPersistTaps="handled"
               renderItem={({ item }) => (
                 <Pressable style={styles.pickerRow} onPress={() => onSelect(item)}>
                   <AppText variant="bodyMedium">{item.title}</AppText>

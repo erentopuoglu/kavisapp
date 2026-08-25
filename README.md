@@ -16,7 +16,7 @@ src/
     (auth)/               giriş, kayıt, şifremi unuttum
     (tabs)/                keşfet, harita, etkinlikler, sürüş kaydı, forum, profil
   features/               feature-based iş mantığı (auth, routes, recording,
-                           poi, group-rides, forum, blocks, moderation, profile)
+                           poi, group-rides, forum, blocks, moderation, admin, profile)
     auth/
       api/                Supabase çağrıları
       store/              Zustand store (session, profile)
@@ -889,6 +889,12 @@ link kullanılmamalı.)
   yok. `eas.json`'daki `preview`/`production` profilleri zaten hazır —
   hesaplar kurulunca `eas build --profile preview` ile ilk beta derlemesi
   alınabilir.
+- **"Apple ile Giriş Yap" yok** — Google ile giriş Faz 0'dan beri çalışıyor
+  (`giris.tsx`), ama Sign in with Apple aynı Apple Developer Program
+  üyeliğini gerektiriyor (App Store'da başka bir üçüncü taraf girişi
+  sunan her uygulama için Apple'ın zorunlu kıldığı bir seçenek). Bilinçli
+  olarak bu fazın dışında — yukarıdaki beta derlemesiyle birlikte, Apple
+  Developer hesabı açılınca aynı oturumda yapılacak.
 - **Gizlilik Politikası/Kullanım Koşulları içindeki iletişim e-postası yer
   tutucu:** Gerçek bir destek/iletişim adresiyle doldurulmalı.
 - **Avatar yükleme özelliği hâlâ yok:** `avatars` bucket'ı Faz 0'dan beri
@@ -912,6 +918,235 @@ link kullanılmamalı.)
   `web/og-image.png`) tutarsız — hiç özelleştirilmemiş görünüyor. Store
   başvurusundan önce uygulamanın kendi ikonu da aynı markaya
   güncellenmeli (kapsam dışı bırakıldı, sadece web sitesi istendi).
+
+## Admin / Moderasyon — Kurulum ve Test
+
+Faz 3'ten beri Teknik Borç olarak duran "itiraz/inceleme mekanizması yok"
+boşluğunu kısmen kapatan, uygulama içi (ayrı bir panel/site DEĞİL) bir
+moderasyon bölümü: `profiles.is_admin = true` olan hesaplarda Profil
+sekmesinde bir "Moderasyon" girişi görünür.
+
+### 1) Yeni migration: `0009_admin_moderation.sql`
+
+```bash
+supabase db push
+```
+
+Ekliyor: `profiles.is_admin` (+ `is_banned` ile aynı desende guard
+trigger), admin'e gizli içerik/raporlar için genişletilmiş SELECT
+politikaları (var olanların YANINA, hiçbirini değiştirmiyor), ve
+`profiles.is_banned`'ı ilk kez gerçekten işler hale getiren insert
+kontrolleri (bkz. Tasarım Kararları — bu alan Faz 0'dan beri şemada
+duruyordu ama hiçbir politika ona bakmıyordu).
+
+### 2) İlk admin'i atama
+
+Hiçbir ekran/API "beni admin yap" sunmuyor (bilerek — is_admin sadece
+service_role ile değişebilir). İlk admin hesabınızı Supabase Dashboard →
+SQL Editor'den elle atayın:
+
+```sql
+update profiles set is_admin = true where username = 'kendi_kullanici_adiniz';
+```
+
+### 3) İki Edge Function deploy edin
+
+```bash
+supabase functions deploy admin-manage-user
+supabase functions deploy admin-moderate-content
+```
+
+İkisi de `supabase/functions/_shared/requireAdmin.ts` (JWT + admin
+kontrolü) ve `_shared/moderatable.ts`'i (`content_type -> tablo`
+eşlemesi) kullanıyor — `submit-report` de artık kendi kopyasını değil
+aynı `_shared/moderatable.ts`'i kullanıyor, bu yüzden **`submit-report`'u
+da yeniden deploy edin**:
+
+```bash
+supabase functions deploy submit-report
+```
+
+### 4) Native değişiklik yok
+
+Bu ekleme sadece JS + RLS + Edge Function — `expo prebuild` gerekmiyor.
+
+### Test Adımları (manuel)
+
+- [ ] Admin olmayan bir hesapla Profil sekmesinde "Moderasyon" girişinin
+      **görünmediğini** doğrulayın.
+- [ ] Yukarıdaki SQL ile bir test hesabını admin yapın → girişin
+      göründüğünü doğrulayın.
+- [ ] Moderasyon hub'ında 4 sayacın (kullanıcı/rota/POI/bekleyen rapor)
+      doğru geldiğini doğrulayın.
+- [ ] Başka bir hesapla bir POI/forum sorusu/cevabı/grup sürüşü mesajını
+      "Bildir" ile raporlayın (eşiğin altında, örn. 1 raportör) →
+      **Bekleyen Raporlar**'da içerik önizlemesi ve rapor sebebiyle
+      görünmeli.
+- [ ] **Gizle** → içerik gizlenmeli (sahibi POI/soru/cevap ekranında sarı
+      "gizlendi" bandını görmeli), rapor bekleyen listeden kaybolmalı.
+- [ ] Başka bir içerik için **Reddet** → rapor bekleyen listeden
+      kaybolmalı, içerik gizlenmemiş kalmalı.
+- [ ] **Gizlenmiş İçerikler**'de biraz önce gizlenen içeriği bulup **Geri
+      Aç** → içerik topluluğa tekrar görünür olmalı.
+- [ ] **Kullanıcılar**'da bir test hesabını arayıp **Banla** → o hesapla
+      **yeni bir oturumda** giriş yapmayı deneyin, reddedilmeli (GoTrue
+      ban_duration). Zaten açık bir oturumu varsa, o oturumdan yeni içerik
+      (rota/POI/forum/mesaj) oluşturmaya çalışın → RLS reddetmeli.
+- [ ] **Ban Kaldır** → aynı hesap tekrar giriş yapabilmeli.
+- [ ] Admin ekranında kendi hesabınız için Banla butonunun
+      **görünmediğini** doğrulayın.
+- [ ] `npx tsc --noEmit` ve `npx expo lint` hatasız geçiyor.
+- [ ] (Local Supabase varsa) `supabase/tests/0000_rls_smoke_tests.sql`'i
+      çalıştırıp yeni "9) ADMIN / MODERASYON" bölümünün geçtiğini
+      doğrulayın.
+
+## Tasarım Kararları (Admin / Moderasyon)
+
+- **`is_banned` ilk kez gerçekten bir şey engelliyor:** Faz 0'dan beri
+  şemada duruyordu ama hiçbir RLS politikası ona bakmıyordu (grep ile
+  doğrulandı) — banlamak tamamen dekoratifti. Şimdi iki katman var: (1)
+  `admin-manage-user`, GoTrue seviyesinde `ban_duration` ile yeni giriş/
+  token yenilemeyi tamamen engelliyor (RLS'e güvenmeyen, en güçlü
+  katman); (2) ana içerik tablolarının (`routes`/`pois`/`forum_questions`/
+  `forum_answers`/`group_ride_messages`) insert politikalarına
+  `is_current_user_banned()` eklendi — hâlâ geçerli bir token'ı olan
+  banlı bir kullanıcı bile YENİ içerik üretemez. Oy/puanlama/grup sürüşü
+  katılımı gibi daha düşük öncelikli insert yolları bu turda bilinçli
+  olarak dışarıda bırakıldı (bkz. Teknik Borç).
+- **`is_admin`, `is_banned` gibi herkese açık okunabilir:**
+  `profiles_select_public using (true)` zaten `is_banned`'ı herkese
+  (anon dahil) açıyordu — yeni bir "hangi alanlar gizli kalsın" mimarisi
+  icat etmek yerine `is_admin`'i de aynı emsalle tutarlı bıraktık. Kimin
+  admin olduğunu bilmek başlı başına bir güvenlik açığı değil (kimliğe
+  bürünmeyi sağlamıyor); ayrı bir mimari bu eklemenin kapsamını
+  gereksiz büyütürdü.
+- **Admin SELECT politikaları EKLENDİ, var olanlar DEĞİŞTİRİLMEDİ:**
+  Postgres'te aynı komut için birden fazla RLS politikası OR'lanır — bu
+  yüzden `routes_select_admin` gibi yeni politikalar var olan
+  `routes_select_visible`i bozma riski taşımadan admin'e ek görünürlük
+  sağlıyor.
+- **Profil sekmesindeki "Moderasyon" girişi sadece UX:** Gerçek yetki
+  kontrolü RLS (`is_current_user_admin()`) ve Edge Function'daki
+  (`requireAdmin`) service_role kontrolünde. Admin olmayan biri
+  `/profil/moderasyon`'a doğrudan gitse bile boş listeler görür ve
+  aksiyonlar 403 döner — client-side gizleme bu projede zaten hep bu
+  şekilde ele alınıyor (bkz. Faz 5/6'daki benzer notlar).
+- **`_shared/moderatable.ts` — tek kaynak, iki tüketici:** Bu oturumda
+  tam da `content_type -> tablo` eşlemesinin `submit-report`'ta ayrı
+  tutulup güncellenmeyi unutulması yüzünden bir bug'a (forum raporlama
+  400 dönüyordu) rastlandı; admin-moderate-content eklerken aynı hatayı
+  tekrarlamamak için tek dosyaya çıkarıldı, `submit-report` de ona
+  yönlendirildi.
+- **RLS smoke test, Edge Function'ların HTTP davranışını test etmiyor:**
+  Deno fonksiyonları psql'den çağrılamaz — "Edge Function'ı admin
+  olmadan çağıramaz" gereksinimi, fonksiyonun yetkisinin tamamen
+  dayandığı `is_admin` alanının forge edilemediğini (guard trigger
+  testi) doğrulayarak SQL seviyesinde karşılanıyor.
+
+## Teknik Borç (Admin / Moderasyon ekleri)
+
+- **Ban, ~1 saatlik bir pencerede tam etkili değil:** GoTrue
+  `ban_duration` sadece YENİ giriş/token yenilemeyi engelliyor; banlanan
+  kullanıcının hâlâ geçerli bir access token'ı varsa (genelde ~1 saate
+  kadar) bazı GET istekleri çalışmaya devam edebilir (RLS'teki
+  `is_current_user_banned()` kontrolleri sadece ana içerik tablolarının
+  INSERT'lerini kapsıyor). Bu JWT'lerin doğası gereği beklenen bir sınır.
+- **Oy/puanlama/grup sürüşü katılımı banlı kullanıcıyı engellemiyor:**
+  `poi_votes`, `route_ratings`, `group_ride_participants` gibi tabloların
+  insert politikaları `is_current_user_banned()` kontrolü eklenmedi —
+  ana "yeni herkese açık içerik üretme" yolları (rota/POI/forum/mesaj)
+  önceliklendirildi. İstenirse aynı desen bu tablolara da uygulanabilir.
+- **İlk admin ataması tamamen elle (SQL Editor):** Bilerek — uygulama
+  içinde "beni admin yap" gibi bir akış olmaması gerekiyor. Birden çok
+  admin gerekiyorsa her biri aynı SQL ile elle atanmalı.
+- **Moderasyon aksiyonları için bildirim yok:** Bir kullanıcının
+  içeriği gizlendiğinde/geri açıldığında veya kendisi banlandığında
+  uygulama içi bir bildirim/push gitmiyor — FCM zaten Faz 6'da genel
+  olarak kapsam dışı bırakılmıştı (bkz. ilgili Teknik Borç), aynı
+  altyapı kurulunca buraya da bağlanabilir.
+
+## Kullanıcı Adıyla Giriş — Kurulum ve Test
+
+Giriş ekranındaki tek alan artık e-posta VEYA kullanıcı adı kabul ediyor
+(`giris.tsx`, girilen değerde `@` var mı yok mu diye bakıp dallanıyor).
+E-posta ile giriş aynen (doğrudan istemciden `signInWithPassword`) devam
+ediyor; kullanıcı adıyla giriş yeni bir Edge Function'dan geçiyor.
+
+### 1) Yeni migration yok
+
+`profiles` tablosuna e-posta eklenmedi — bilerek. E-posta çözümü tamamen
+sunucu tarafında, `login-with-username` Edge Function'ının içinde kalıyor.
+
+### 2) Yeni Edge Function deploy edin
+
+```bash
+supabase functions deploy login-with-username
+```
+
+### 3) Native değişiklik yok
+
+Sadece JS + yeni bir Edge Function — `expo prebuild` gerekmiyor.
+
+### Test Adımları (manuel)
+
+- [ ] Giriş ekranında e-posta ile giriş eskisi gibi çalışıyor.
+- [ ] Aynı ekranda **kullanıcı adıyla** (e-posta değil) giriş yapın →
+      başarılı olmalı.
+- [ ] Var olan bir kullanıcı adıyla **yanlış şifre** girin → "Kullanıcı
+      adı veya şifre hatalı." hatası, e-postanın var/yok olduğuna dair
+      hiçbir ipucu yok.
+- [ ] **Var olmayan** bir kullanıcı adıyla giriş deneyin → **birebir
+      aynı** hata mesajı.
+- [ ] `supabase/tests/0001_login_with_username_smoke_test.sh`'i (local/
+      staging'de, `SUPABASE_URL`/`SUPABASE_ANON_KEY` ile) çalıştırıp
+      geçtiğini doğrulayın — yanlış şifre/var olmayan kullanıcı adı
+      senaryolarını ve yanıt sürelerini otomatik karşılaştırıyor.
+- [ ] `npx tsc --noEmit` ve `npx expo lint` hatasız geçiyor.
+
+## Tasarım Kararları (Kullanıcı Adıyla Giriş)
+
+- **E-posta istemciye hiç çıkmıyor:** `login-with-username`, kullanıcı
+  adını `service_role` ile e-postaya çözüp Supabase Auth'un
+  `signInWithPassword`'ünü **sunucu içinde** çağırıyor, istemciye sadece
+  sonuç session'ının (`access_token`/`refresh_token`) döndürüyor — Google
+  OAuth akışındaki `createSessionFromUrl` ile aynı `setSession` deseni.
+  `profiles` tablosuna e-posta hiç eklenmedi, hâlâ herkese açık okunuyor
+  ama e-posta içermiyor.
+- **Timing-attack koruması — gerçek maliyeti eşitleyerek, uydurma bir
+  gecikmeyle değil:** Kullanıcı adı bulunamadığında bile fonksiyon AYNI
+  `signInWithPassword` çağrısını `.invalid` TLD'li (RFC 2606, asla gerçek
+  olamaz) bir sentinel e-postayla yapıyor. Asıl maliyet zaten GoTrue'nun
+  şifre karşılaştırması olduğu için (profiles'taki indeksli username
+  sorgusu buna kıyasla ihmal edilebilir), iki senaryo da aynı alt sistemden
+  geçip neredeyse aynı sürede dönüyor — `setTimeout` ile uydurma bir
+  gecikme eklemek yerine gerçek işi eşitledik.
+- **Hata mesajı iki durumda da birebir aynı:** "Kullanıcı adı veya şifre
+  hatalı." — hangi alanın yanlış olduğu (kullanıcı adı yok mu, şifre mi
+  yanlış) hiçbir zaman ayırt ettirilmiyor.
+- **Kullanıcı adının kendisi zaten gizli değil:** Bu tasarımın gizlediği
+  tek şey hangi kullanıcı adının hangi e-postaya karşılık geldiği —
+  kullanıcı adının var olup olmadığı zaten `profiles` tablosu + rota/POI/
+  forum'da yazar adı olarak her yerde herkese açık.
+- **Ayrı bir HTTP smoke test dosyası:** `0000_rls_smoke_tests.sql` saf SQL/
+  psql — Deno HTTP fonksiyonu çağıramaz. `0001_login_with_username_smoke_test.sh`
+  (curl tabanlı) bunun için ayrı: geçici bir test kullanıcısı oluşturuyor,
+  üç senaryoyu (yanlış şifre / var olmayan kullanıcı adı / doğru şifre)
+  ve ikisinin yanıt süresi farkını kontrol ediyor, sonunda `delete-account`
+  ile kendini temizliyor.
+
+## Teknik Borç (Kullanıcı Adıyla Giriş ekleri)
+
+- **"Şifremi Unuttum" hâlâ sadece e-posta istiyor:** Sadece kullanıcı
+  adıyla giriş yapan biri şifresini unutursa e-postasını hatırlaması
+  gerekiyor — bu ekran değişmedi. İstenirse aynı `login-with-username`
+  deseniyle (kullanıcı adından e-postayı sunucu içinde çözüp sıfırlama
+  e-postasını ona gönderen) bir varyant eklenebilir.
+- **Timing eşitlemesi sadece bu fonksiyona özel:** `signInWithEmail`
+  (doğrudan istemciden) ve Google OAuth akışlarında böyle bir eşitleme
+  yok — onlar zaten e-postayı hiç gizlemiyor, bu yüzden aynı korumaya
+  ihtiyaçları yok.
+- **HTTP smoke test'i CI'da otomatik çalışmıyor:** Elle çalıştırılması
+  gerekiyor (local/staging'de), `0000_rls_smoke_tests.sql` ile aynı sınır.
 
 ## Tasarım Kararları (Faz 1)
 
