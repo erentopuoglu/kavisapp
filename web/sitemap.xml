@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- /gizlilik ve /kosullar bilinçli olarak burada yok — ikisi de
+     <meta name="robots" content="noindex, follow"> taşıyor (bkz.
+     web/build.mjs legalPage()), sitemap'te sadece indexlenebilir
+     sayfalar listelenmeli. -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://kavisapp.com/</loc>
+    <lastmod>2026-08-25</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>

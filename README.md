@@ -723,10 +723,19 @@ Firebase projesi, EAS/Apple Developer/Google Play hesapları gerektirdiği
 için bilinçli olarak bu fazın dışında bırakıldı — bkz. aşağıdaki Teknik
 Borç bölümündeki adım adım liste.
 
-### 1) Yeni migration yok
+### 1) Yeni migration: `0008_website_waitlist.sql`
 
 Hesap silme, mevcut `on delete cascade` ilişkilerine dayanıyor (bkz.
-Tasarım Kararları) — şema değişikliği gerekmedi.
+Tasarım Kararları) — bunun için şema değişikliği gerekmedi. Ama
+kavisapp.com'un "Çıkınca haber ver" formu için küçük bir tablo eklendi:
+
+```bash
+supabase db push
+```
+
+`waitlist` tablosu — `anon` rolü insert atabilir (e-posta formatı DB'de
+kontrol ediliyor), kimse okuyamaz (bkz. `web/README.md`'deki "Çıkınca
+haber ver" bölümü ve `0008_website_waitlist.sql`'in yorumları).
 
 ### 2) İki Edge Function deploy edin
 
@@ -745,14 +754,18 @@ reddediliyordu. Faz 5'i zaten deploy ettiyseniz bu adımı atlamayın.
 
 Bu faz sadece JS + yeni bir Edge Function — `expo prebuild` gerekmiyor.
 
-### 4) Store başvurusu için gizlilik politikası URL'si — kavisapp.com
+### 4) kavisapp.com — landing page + store başvurusu URL'leri
 
 Google Play Console ve App Store Connect, uygulama içi bir ekran değil,
 **herkese açık, kalıcı bir URL** olarak gizlilik politikası istiyor. Bunun
-için `web/` altında Cloudflare Pages'e deploy edilecek, framework'süz basit
-bir statik site var: bir landing page (`/`) ve iki yasal sayfa
-(`/gizlilik`, `/kosullar`). Kurulum ve adım adım Cloudflare Pages deploy
-talimatları için **`web/README.md`**'ye bakın.
+için `web/` altında Cloudflare Pages'e deploy edilecek, framework'süz bir
+statik site var: bir landing page (`/` — telefon mockup'ı, özellik
+kartları, "Çıkınca haber ver" e-posta kaydı, "Kavis Hakkında" bölümü) ve
+iki yasal sayfa (`/gizlilik`, `/kosullar`). SEO/paylaşım meta etiketleri
+(Open Graph, Twitter Card, `og-image.png`), `favicon`/`apple-touch-icon`,
+`robots.txt`/`sitemap.xml` dahil. Kurulum, ortam değişkenleri ve adım
+adım Cloudflare Pages deploy talimatları için **`web/README.md`**'ye
+bakın.
 
 Store konsollarına girilecek URL'ler:
 
@@ -786,6 +799,13 @@ link kullanılmamalı.)
       altında dosyası varsa, Storage'da bu dosyaların da silindiğini
       doğrulayın.
 - [ ] `npx tsc --noEmit` ve `npx expo lint` hatasız geçiyor.
+- [ ] kavisapp.com deploy edildikten sonra: `/`, `/gizlilik`, `/kosullar`
+      açılıyor; "Çıkınca Haber Ver" formuna gerçek bir e-posta girip
+      Supabase Table Editor'de `waitlist`'te göründüğünü doğrulayın.
+- [ ] Aynı linki WhatsApp'a (veya
+      <https://developers.facebook.com/tools/debug/>'a) yapıştırıp
+      önizleme kartının (başlık/açıklama/`og-image.png`) doğru
+      göründüğünü doğrulayın.
 
 ## Tasarım Kararları (Faz 6)
 
@@ -823,6 +843,26 @@ link kullanılmamalı.)
   destekliyor, bu yüzden ek karmaşıklığa gerek kalmadı. Site framework'süz
   (düz HTML/CSS + bağımlılıksız bir Node script) — RN uygulamasının build
   zincirinden tamamen izole, birbirini bozma riski yok.
+- **Ekran görüntüsü alanları `<img onerror="...display='none'">`, CSS
+  `background-image` değil:** Bir `background-image` 404 olduğunda zaten
+  görünmez (zarif "yer tutucu" davranışı bedava), ama hiçbir zaman `alt`
+  metni taşıyamaz — gerçek bir ekran görüntüsü eklendiğinde erişilebilir
+  kalması için baştan `<img alt="...">` kullanıldı; sadece yüklenemediği
+  sürece (şu an olduğu gibi) JS ile gizleniyor, altındaki CSS gradyanı
+  ortaya çıkıyor.
+- **Kontrast, tahminle değil ölçülerek seçildi:** WCAG bağıl luminans
+  formülüyle hesaplanan gerçek oranlar `--text-tertiary`'nin (eski
+  `#5b6068`, bg üzerinde 2.84:1) küçük metinlerde (footer, "son
+  güncelleme") AA eşiğinin (4.5:1) altında kaldığını ve `--border`'ın
+  (2a2f37) bir input sınırı için WCAG 1.4.11'in (>=3:1) çok altında
+  olduğunu ortaya çıkardı — ikisi de düzeltildi (`#838a96` ve yeni
+  `--border-strong: #636b76` token'ı, bkz. `styles.css` yorumları).
+- **Honeypot alanı `.sr-only` ile aynı gizleme tekniğini kullanıyor,
+  `position:absolute; left:-9999px` DEĞİL:** İkincisi, konumlanmamış bir
+  atası olduğunda (`.waitlist-form`'da `position:relative` yoktu) tüm
+  sayfanın yatay scroll genişliğini bozup mobilde kırılmaya yol açıyordu
+  — headless Chrome ile `document.documentElement.scrollWidth` ölçülerek
+  bulundu, gerçek bir mobil kırılma bug'ıydı.
 
 ## Teknik Borç (Faz 6 ekleri)
 
@@ -855,6 +895,23 @@ link kullanılmamalı.)
   şemada duruyor ama hiçbir ekran ona dosya yüklemiyor — Gizlilik
   Politikası'ndaki "profil bilgileri" ifadesi bunu bugün için kapsamıyor,
   özellik eklenirse politika metni güncellenmeli.
+- **Bekleme listesi spam koruması sadece honeypot + `unique(email)`:**
+  Anon insert endpoint'ine doğrudan istek atan bir bot bunu atlayabilir
+  (bkz. `web/README.md`'deki "Çıkınca haber ver" bölümü). Ölçek büyürse
+  Cloudflare Turnstile + onu doğrulayan bir Pages Function bir sonraki
+  adım.
+- **kavisapp.com'da doldurulması gereken yer tutucular:** Instagram
+  `@kavisapp` ve `info@kavisapp.com`'un gerçekten var olduğundan emin
+  olun (yoksa linkler kırık görünür), "Kavis Hakkında" bölümündeki
+  köşeli parantezli taslak metin, ve Gizlilik/Koşullar'daki iletişim
+  e-postası — üçü de `web/README.md`'nin "Henüz yapılmadı" bölümünde
+  listeli.
+- **Uygulamanın gerçek ikonu hâlâ Expo'nun mavi/beyaz varsayılanı:**
+  `assets/images/icon.png` (ve `favicon.png`), kavisapp.com için bu fazda
+  üretilen turuncu-üzerine-koyu marka görselleriyle (bkz. `web/favicon.png`,
+  `web/og-image.png`) tutarsız — hiç özelleştirilmemiş görünüyor. Store
+  başvurusundan önce uygulamanın kendi ikonu da aynı markaya
+  güncellenmeli (kapsam dışı bırakıldı, sadece web sitesi istendi).
 
 ## Tasarım Kararları (Faz 1)
 

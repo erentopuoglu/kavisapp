@@ -4,35 +4,96 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Kavis — Motosikletçiler İçin Bir Topluluk</title>
-<meta name="description" content="Kavis; rota keşfi, GPX kaydı, topluluk işaret noktaları, grup sürüşleri ve soru-cevap forumu barındıran motosikletçiler için mobil uygulama.">
-<link rel="icon" href="/favicon.png">
+<meta name="description" content="Kavis; rota keşfi, GPX kaydı, topluluk işaret noktaları, grup sürüşleri ve soru-cevap forumu barındıran motosikletçiler için mobil uygulama. Yakında App Store ve Google Play'de.">
+<link rel="canonical" href="https://kavisapp.com/">
+
+<!-- Open Graph (WhatsApp, Instagram/Facebook, LinkedIn...) -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Kavis">
+<meta property="og:locale" content="tr_TR">
+<meta property="og:url" content="https://kavisapp.com/">
+<meta property="og:title" content="Kavis — Motosikletçiler İçin Bir Topluluk">
+<meta property="og:description" content="Rota keşfi, GPX kaydı, topluluk işaret noktaları, grup sürüşleri ve soru-cevap forumu. Yakında App Store ve Google Play'de.">
+<meta property="og:image" content="https://kavisapp.com/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Kavis — Rotanı çiz. Topluluğa katıl.">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Kavis — Motosikletçiler İçin Bir Topluluk">
+<meta name="twitter:description" content="Rota keşfi, GPX kaydı, topluluk işaret noktaları, grup sürüşleri ve soru-cevap forumu. Yakında App Store ve Google Play'de.">
+<meta name="twitter:image" content="https://kavisapp.com/og-image.png">
+
+<link rel="icon" type="image/png" href="/favicon-32.png" sizes="32x32">
+<link rel="icon" type="image/png" href="/favicon.png" sizes="48x48">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&amp;family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,500;0,7..72,600;1,7..72,400&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/styles.css">
 </head>
-<body>
+<body class="page-home">
 
 <header class="site-header">
   <div class="site-header-inner">
     <a class="wordmark" href="/">Kavis</a>
-    <nav class="site-nav" aria-label="Ana gezinme">
-      <a href="/#ozellikler">Özellikler</a>
-      <a href="/gizlilik">Gizlilik</a>
-      <a href="/kosullar">Koşullar</a>
-    </nav>
+    <div class="site-header-actions">
+      <nav class="site-nav" aria-label="Ana gezinme">
+        <a href="/#ozellikler">Özellikler</a>
+        <a href="/#hakkinda">Hakkında</a>
+        <a href="/gizlilik">Gizlilik</a>
+        <a href="/kosullar">Koşullar</a>
+      </nav>
+      <a class="icon-link" href="https://instagram.com/kavisapp" target="_blank" rel="noopener noreferrer" aria-label="Kavis&#39;i Instagram&#39;da takip edin (@kavisapp)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="3" y="3" width="18" height="18" rx="5"></rect>
+          <circle cx="12" cy="12" r="4.2"></circle>
+          <circle cx="17.2" cy="6.8" r="1.1" fill="currentColor" stroke="none"></circle>
+        </svg>
+      </a>
+    </div>
   </div>
 </header>
 
 <main>
   <section class="hero">
-    <div class="hero-eyebrow">Yakında App Store ve Google Play&rsquo;de</div>
-    <h1>Rotanı çiz.<br><span>Topluluğa katıl.</span></h1>
-    <p class="hero-lede">
-      Kavis; motosiklet dostu rota keşfi, GPX sürüş kaydı, topluluk işaret
-      noktaları, grup sürüşleri ve soru-cevap forumu barındıran, motosiklet
-      tutkunları için bir mobil uygulama.
-    </p>
+    <div class="hero-grid">
+      <div class="hero-copy">
+        <div class="hero-eyebrow">Yakında App Store ve Google Play&rsquo;de</div>
+        <h1>Rotanı çiz.<br><span>Topluluğa katıl.</span></h1>
+        <p class="hero-lede">
+          Kavis; motosiklet dostu rota keşfi, GPX sürüş kaydı, topluluk
+          işaret noktaları, grup sürüşleri ve soru-cevap forumu barındıran,
+          motosiklet tutkunları için bir mobil uygulama.
+        </p>
+
+        <form class="waitlist-form" id="waitlist-form" novalidate>
+          <div class="field">
+            <label for="waitlist-email" class="sr-only">E-posta adresiniz</label>
+            <input type="email" id="waitlist-email" name="email" placeholder="e-posta adresiniz" autocomplete="email" required>
+          </div>
+          <!-- Honeypot: gerçek kullanıcılar bunu görmez/doldurmaz, basit
+               botlar genelde doldurur — bkz. web/README.md "Spam koruması". -->
+          <div class="hp-field" aria-hidden="true">
+            <label for="waitlist-website">Website</label>
+            <input type="text" id="waitlist-website" name="website" tabindex="-1" autocomplete="off">
+          </div>
+          <button type="submit">Çıkınca Haber Ver</button>
+          <p class="waitlist-status" id="waitlist-status" role="status" aria-live="polite"></p>
+        </form>
+      </div>
+
+      <div class="hero-visual" aria-hidden="true">
+        <div class="phone-frame">
+          <div class="phone-notch"></div>
+          <div class="phone-screen">
+            <img src="/screenshots/hero.png" alt="" onerror="this.style.display='none'">
+          </div>
+        </div>
+      </div>
+    </div>
   </section>
 
   <div class="lane" aria-hidden="true"></div>
@@ -41,38 +102,159 @@
     <p class="features-label">Uygulamada Neler Var</p>
     <div class="feature-grid">
       <div class="feature-card">
-        <h3>Rota Keşfi</h3>
-        <p>Motosiklet dostu rotaları keşfedin, puanlayın; kendi rotanızı haritada çizip toplulukla paylaşın.</p>
+        <div class="feature-thumb" style="--thumb-tint: rgba(255, 122, 26, 0.18)">
+          <img src="/screenshots/rota-kesfi.png" alt="Kavis&#39;te rota keşfi ekranının görüntüsü" onerror="this.style.display='none'">
+        </div>
+        <div class="feature-card-body">
+          <h3>Rota Keşfi</h3>
+          <p>Motosiklet dostu rotaları keşfedin, puanlayın; kendi rotanızı haritada çizip toplulukla paylaşın.</p>
+        </div>
       </div>
       <div class="feature-card">
-        <h3>Sürüş Kaydı</h3>
-        <p>Sürüşünüzü GPX olarak kaydedin veya içe aktarın; mesafe, süre ve ortalama hızınızı görün.</p>
+        <div class="feature-thumb" style="--thumb-tint: rgba(255, 193, 7, 0.16)">
+          <img src="/screenshots/surus-kaydi.png" alt="Kavis&#39;te sürüş kaydı ekranının görüntüsü" onerror="this.style.display='none'">
+        </div>
+        <div class="feature-card-body">
+          <h3>Sürüş Kaydı</h3>
+          <p>Sürüşünüzü GPX olarak kaydedin veya içe aktarın; mesafe, süre ve ortalama hızınızı görün.</p>
+        </div>
       </div>
       <div class="feature-card">
-        <h3>İşaretli Noktalar</h3>
-        <p>Benzinlik, mola noktası, tehlikeli viraj gibi topluluk kaynaklı işaretleri haritada görün, oy verin.</p>
+        <div class="feature-thumb" style="--thumb-tint: rgba(229, 72, 77, 0.14)">
+          <img src="/screenshots/isaretli-noktalar.png" alt="Kavis&#39;te işaretli noktalar ekranının görüntüsü" onerror="this.style.display='none'">
+        </div>
+        <div class="feature-card-body">
+          <h3>İşaretli Noktalar</h3>
+          <p>Benzinlik, mola noktası, tehlikeli viraj gibi topluluk kaynaklı işaretleri haritada görün, oy verin.</p>
+        </div>
       </div>
       <div class="feature-card">
-        <h3>Grup Sürüşleri</h3>
-        <p>Etkinlik oluşturun, katılımcıları onaylayın; sürüş sırasında canlı konum ve sohbetle bağlı kalın.</p>
+        <div class="feature-thumb" style="--thumb-tint: rgba(61, 220, 132, 0.13)">
+          <img src="/screenshots/grup-suruslari.png" alt="Kavis&#39;te grup sürüşü etkinliği ekranının görüntüsü" onerror="this.style.display='none'">
+        </div>
+        <div class="feature-card-body">
+          <h3>Grup Sürüşleri</h3>
+          <p>Etkinlik oluşturun, katılımcıları onaylayın; sürüş sırasında canlı konum ve sohbetle bağlı kalın.</p>
+        </div>
       </div>
       <div class="feature-card">
-        <h3>Soru-Cevap Forumu</h3>
-        <p>Motosikletinizle ilgili sorular sorun, topluluktan cevap alın, en iyi cevabı işaretleyin.</p>
+        <div class="feature-thumb" style="--thumb-tint: rgba(255, 122, 26, 0.18)">
+          <img src="/screenshots/forum.png" alt="Kavis&#39;te soru-cevap forumu ekranının görüntüsü" onerror="this.style.display='none'">
+        </div>
+        <div class="feature-card-body">
+          <h3>Soru-Cevap Forumu</h3>
+          <p>Motosikletinizle ilgili sorular sorun, topluluktan cevap alın, en iyi cevabı işaretleyin.</p>
+        </div>
       </div>
+    </div>
+  </section>
+
+  <div class="lane" aria-hidden="true"></div>
+
+  <section class="about" id="hakkinda">
+    <h2>Kavis Hakkında</h2>
+    <div class="about-placeholder">
+      <span class="about-tag">Kurucudan — yakında</span>
+      <p>[Nasıl başladı: motosiklete ve sürüşe tutkunuz nereden geliyor, Kavis fikri hangi anda/ihtiyaçtan doğdu?]</p>
+      <p>[Neden Kavis: hangi sorunu çözüyor, mevcut çözümlerden (harita uygulamaları, WhatsApp grupları vb.) farkı ne?]</p>
+      <p>[Nereye gidiyor: topluluk için vizyonunuz, önümüzdeki dönemde neye öncelik vereceğiniz.]</p>
     </div>
   </section>
 </main>
 
 <footer class="site-footer">
   <div class="site-footer-inner">
-    <span>© 2026 Kavis</span>
+    <span>© 2026 Kavis. Tüm hakları saklıdır.</span>
     <div class="site-footer-links">
       <a href="/gizlilik">Gizlilik Politikası</a>
       <a href="/kosullar">Kullanım Koşulları</a>
+      <a href="mailto:info@kavisapp.com">info@kavisapp.com</a>
+      <a class="icon-link" href="https://instagram.com/kavisapp" target="_blank" rel="noopener noreferrer" aria-label="Kavis&#39;i Instagram&#39;da takip edin (@kavisapp)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="3" y="3" width="18" height="18" rx="5"></rect>
+          <circle cx="12" cy="12" r="4.2"></circle>
+          <circle cx="17.2" cy="6.8" r="1.1" fill="currentColor" stroke="none"></circle>
+        </svg>
+      </a>
     </div>
   </div>
 </footer>
+
+<script>
+(function () {
+  var SUPABASE_URL = "__SUPABASE_URL__";
+  var SUPABASE_ANON_KEY = "__SUPABASE_ANON_KEY__";
+
+  var form = document.getElementById("waitlist-form");
+  var status = document.getElementById("waitlist-status");
+  if (!form || !status) return;
+
+  function setStatus(message, kind) {
+    status.textContent = message;
+    status.className = "waitlist-status" + (kind ? " is-" + kind : "");
+  }
+
+  var configured = SUPABASE_URL.indexOf("__") !== 0 && SUPABASE_ANON_KEY.indexOf("__") !== 0;
+  var submitButton = form.querySelector('button[type="submit"]');
+
+  if (!configured) {
+    setStatus("Kayıt formu şu anda kullanılamıyor.", "error");
+    if (submitButton) submitButton.disabled = true;
+    return;
+  }
+
+  form.addEventListener("submit", function (event) {
+    event.preventDefault();
+
+    // Honeypot dolu → muhtemelen bot. Gerçek kullanıcı deneyimini bozmamak
+    // için başarılı görünümü veriyoruz ama insert atmıyoruz.
+    var honeypot = form.elements["website"];
+    if (honeypot && honeypot.value) {
+      form.reset();
+      setStatus("Teşekkürler! Yayına aldığımızda haber vereceğiz.", "success");
+      return;
+    }
+
+    var email = (form.elements["email"].value || "").trim();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setStatus("Geçerli bir e-posta adresi girin.", "error");
+      return;
+    }
+
+    if (submitButton) submitButton.disabled = true;
+    setStatus("Gönderiliyor...", "");
+
+    fetch(SUPABASE_URL + "/rest/v1/waitlist", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: "Bearer " + SUPABASE_ANON_KEY,
+        Prefer: "return=minimal",
+      },
+      body: JSON.stringify({ email: email }),
+    })
+      .then(function (response) {
+        if (response.ok) {
+          form.reset();
+          setStatus("Teşekkürler! Yayına aldığımızda haber vereceğiz.", "success");
+          return;
+        }
+        if (response.status === 409) {
+          setStatus("Bu e-posta zaten listede — teşekkürler!", "success");
+          return;
+        }
+        throw new Error("request-failed");
+      })
+      .catch(function () {
+        setStatus("Bir şeyler ters gitti, lütfen tekrar deneyin.", "error");
+      })
+      .finally(function () {
+        if (submitButton) submitButton.disabled = false;
+      });
+  });
+})();
+</script>
 
 </body>
 </html>
