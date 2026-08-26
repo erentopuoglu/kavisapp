@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from "react-native";
 
 import { useAuthStore } from "@/features/auth/store/useAuthStore";
 import { AppText } from "@/shared/components/AppText";
@@ -22,90 +22,99 @@ export default function ProfilScreen() {
 
   return (
     <ScreenContainer>
-      <View style={styles.header}>
-        <View style={styles.avatarPlaceholder}>
-          <AppText variant="title">{(profile?.username ?? "?").charAt(0).toUpperCase()}</AppText>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={styles.scrollContent}
+      >
+        <View style={styles.header}>
+          <View style={styles.avatarPlaceholder}>
+            <AppText variant="title">{(profile?.username ?? "?").charAt(0).toUpperCase()}</AppText>
+          </View>
+
+          {profile ? (
+            <>
+              <AppText variant="title" style={styles.username}>
+                {profile.username}
+              </AppText>
+              <AppText variant="body" color={colors.textSecondary}>
+                {session?.user.email}
+              </AppText>
+              {profile.bike_model ? (
+                <AppText variant="caption" color={colors.primary} style={styles.bikeModel}>
+                  {profile.bike_model}
+                </AppText>
+              ) : null}
+            </>
+          ) : profileError ? (
+            <View style={styles.errorBox}>
+              <AppText variant="bodyMedium" color={colors.danger} style={styles.errorTitle}>
+                Profil yüklenemedi
+              </AppText>
+              <AppText variant="caption" color={colors.textSecondary} style={styles.errorDetail}>
+                {profileError}
+              </AppText>
+              <Button label="Tekrar Dene" onPress={refreshProfile} variant="secondary" style={styles.retryButton} />
+            </View>
+          ) : (
+            <View style={styles.loadingRow}>
+              <ActivityIndicator color={colors.primary} />
+              <AppText variant="body" color={colors.textSecondary} style={styles.loadingText}>
+                Profil yükleniyor...
+              </AppText>
+            </View>
+          )}
         </View>
 
-        {profile ? (
-          <>
-            <AppText variant="title" style={styles.username}>
-              {profile.username}
+        {profile?.is_admin ? (
+          <Pressable style={styles.moderationRow} onPress={() => router.push("/profil/moderasyon")}>
+            <Ionicons name="shield-checkmark-outline" size={18} color={colors.primary} />
+            <AppText variant="bodyMedium" color={colors.primary} style={styles.moderationText}>
+              Moderasyon
             </AppText>
-            <AppText variant="body" color={colors.textSecondary}>
-              {session?.user.email}
-            </AppText>
-            {profile.bike_model ? (
-              <AppText variant="caption" color={colors.primary} style={styles.bikeModel}>
-                {profile.bike_model}
-              </AppText>
-            ) : null}
-          </>
-        ) : profileError ? (
-          <View style={styles.errorBox}>
-            <AppText variant="bodyMedium" color={colors.danger} style={styles.errorTitle}>
-              Profil yüklenemedi
-            </AppText>
-            <AppText variant="caption" color={colors.textSecondary} style={styles.errorDetail}>
-              {profileError}
-            </AppText>
-            <Button label="Tekrar Dene" onPress={refreshProfile} variant="secondary" style={styles.retryButton} />
-          </View>
-        ) : (
-          <View style={styles.loadingRow}>
-            <ActivityIndicator color={colors.primary} />
-            <AppText variant="body" color={colors.textSecondary} style={styles.loadingText}>
-              Profil yükleniyor...
-            </AppText>
-          </View>
-        )}
-      </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.primary} />
+          </Pressable>
+        ) : null}
 
-      {profile?.is_admin ? (
-        <Pressable style={styles.moderationRow} onPress={() => router.push("/profil/moderasyon")}>
-          <Ionicons name="shield-checkmark-outline" size={18} color={colors.primary} />
-          <AppText variant="bodyMedium" color={colors.primary} style={styles.moderationText}>
-            Moderasyon
-          </AppText>
-          <Ionicons name="chevron-forward" size={18} color={colors.primary} />
-        </Pressable>
-      ) : null}
+        <Button
+          label="Engellenen Kullanıcılar"
+          onPress={() => router.push("/profil/engellenenler")}
+          variant="secondary"
+          style={styles.blockedUsersButton}
+        />
+        <Button
+          label="Gizlilik Politikası"
+          onPress={() => router.push("/gizlilik-politikasi")}
+          variant="secondary"
+          style={styles.legalButton}
+        />
+        <Button
+          label="Kullanım Koşulları"
+          onPress={() => router.push("/kullanim-kosullari")}
+          variant="secondary"
+          style={styles.legalButton}
+        />
 
-      <Button
-        label="Engellenen Kullanıcılar"
-        onPress={() => router.push("/profil/engellenenler")}
-        variant="secondary"
-        style={styles.blockedUsersButton}
-      />
-      <Button
-        label="Gizlilik Politikası"
-        onPress={() => router.push("/gizlilik-politikasi")}
-        variant="secondary"
-        style={styles.legalButton}
-      />
-      <Button
-        label="Kullanım Koşulları"
-        onPress={() => router.push("/kullanim-kosullari")}
-        variant="secondary"
-        style={styles.legalButton}
-      />
+        <Button label="Çıkış Yap" onPress={handleSignOut} variant="danger" style={styles.signOutButton} />
 
-      <Button label="Çıkış Yap" onPress={handleSignOut} variant="danger" style={styles.signOutButton} />
-
-      <AppText variant="caption" color={colors.textSecondary} style={styles.dangerZoneLabel}>
-        Tehlikeli Bölge
-      </AppText>
-      <Button
-        label="Hesabımı Sil"
-        onPress={() => router.push("/profil/hesap-sil")}
-        variant="danger"
-        style={styles.deleteAccountButton}
-      />
+        <AppText variant="caption" color={colors.textSecondary} style={styles.dangerZoneLabel}>
+          Tehlikeli Bölge
+        </AppText>
+        <Button
+          label="Hesabımı Sil"
+          onPress={() => router.push("/profil/hesap-sil")}
+          variant="danger"
+          style={styles.deleteAccountButton}
+        />
+      </ScrollView>
     </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
+  scrollContent: {
+    paddingBottom: spacing.xl,
+  },
   header: {
     alignItems: "center",
     marginTop: spacing.xxl,

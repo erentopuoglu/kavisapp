@@ -1,6 +1,6 @@
 import { router } from "expo-router";
 import { useState } from "react";
-import { Alert, ScrollView, StyleSheet, View } from "react-native";
+import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from "react-native";
 
 import { sendPasswordResetEmail } from "@/features/auth/api/authApi";
 import { AppText } from "@/shared/components/AppText";
@@ -34,31 +34,45 @@ export default function SifremiUnuttumScreen() {
   };
 
   return (
-    <ScreenContainer>
-      <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-        <View style={styles.header}>
-          <AppText variant="title">Şifremi Unuttum</AppText>
-          <AppText variant="body" color={colors.textSecondary} style={styles.subtitle}>
-            Kayıtlı e-posta adresini gir, sana bir sıfırlama bağlantısı gönderelim.
-          </AppText>
-        </View>
+    <ScreenContainer edges={["top", "left", "right", "bottom"]}>
+      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={styles.scrollContent}
+        >
+          <View style={styles.header}>
+            <AppText variant="title">Şifremi Unuttum</AppText>
+            <AppText variant="body" color={colors.textSecondary} style={styles.subtitle}>
+              Kayıtlı e-posta adresini gir, sana bir sıfırlama bağlantısı gönderelim.
+            </AppText>
+          </View>
 
-        <TextField
-          label="E-posta"
-          autoCapitalize="none"
-          keyboardType="email-address"
-          value={email}
-          onChangeText={setEmail}
-          placeholder="ornek@eposta.com"
-        />
+          <TextField
+            label="E-posta"
+            autoCapitalize="none"
+            keyboardType="email-address"
+            value={email}
+            onChangeText={setEmail}
+            placeholder="ornek@eposta.com"
+            returnKeyType="done"
+            onSubmitEditing={handleSubmit}
+          />
 
-        <Button label="Sıfırlama Bağlantısı Gönder" onPress={handleSubmit} loading={isSubmitting} />
-      </ScrollView>
+          <Button label="Sıfırlama Bağlantısı Gönder" onPress={handleSubmit} loading={isSubmitting} />
+        </ScrollView>
+      </KeyboardAvoidingView>
     </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
+  flex: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: spacing.xl,
+  },
   header: {
     marginTop: spacing.xxl,
     marginBottom: spacing.xl,
