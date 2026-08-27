@@ -25,3 +25,11 @@ export const AppMapView = impl.AppMapView;
 export const AppMapMarker = impl.AppMapMarker;
 export const AppMapPolyline = impl.AppMapPolyline;
 export type { LatLng, CameraPosition, MapMarkerData } from "./types";
+
+// Directions/Geocoding @rnmapbox/maps native modülüne değil düz HTTP'ye
+// dayanır — Expo Go'da da sorunsuz çalışır, bu yüzden ayrı bir mock
+// gerekmez ve doğrudan (koşulsuz) export edilebilir.
+export { fetchDirections, DirectionsError, MAX_DIRECTIONS_WAYPOINTS } from "./directions";
+export type { DirectionsResult } from "./directions";
+export { searchPlaces } from "./geocoding";
+export type { GeocodingResult } from "./geocoding";

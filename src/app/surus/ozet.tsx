@@ -39,6 +39,7 @@ export default function SurusOzetScreen() {
   const [showRoutePicker, setShowRoutePicker] = useState(false);
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [discarding, setDiscarding] = useState(false);
 
   if (points.length < 2 || !startedAtMs) {
     return (
@@ -80,8 +81,14 @@ export default function SurusOzetScreen() {
         text: "Sil",
         style: "destructive",
         onPress: async () => {
-          await discard();
-          router.replace("/(tabs)/surus-kaydi");
+          setDiscarding(true);
+          try {
+            await discard();
+            router.replace("/(tabs)/surus-kaydi");
+          } catch (err) {
+            Alert.alert("Silinemedi", describeError(err));
+            setDiscarding(false);
+          }
         },
       },
     ]);
@@ -138,7 +145,7 @@ export default function SurusOzetScreen() {
               loading={exporting}
               style={styles.exportButton}
             />
-            <Button label="Sürüşü Sil" onPress={handleDiscard} variant="danger" />
+            <Button label="Sürüşü Sil" onPress={handleDiscard} variant="danger" loading={discarding} />
           </View>
         </ScrollView>
       </ScreenContainer>

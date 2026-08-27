@@ -72,6 +72,11 @@ const config: ExpoConfig = {
           "Kavis, yakınınızdaki rotaları ve işaretli noktaları gösterebilmek için konumunuza ihtiyaç duyar.",
         isAndroidBackgroundLocationEnabled: true,
         isAndroidForegroundServiceEnabled: true,
+        // isAndroidBackgroundLocationEnabled'ın iOS karşılığı — bu olmadan
+        // Info.plist'in UIBackgroundModes'una "location" eklenmiyor ve
+        // uygulama arka plana atılınca/ekran kilitlenince iOS'ta GPS takibi
+        // duruyor (bkz. denetim raporu — store'a çıkmadan önce kritik).
+        isIosBackgroundLocationEnabled: true,
       },
     ],
   ],

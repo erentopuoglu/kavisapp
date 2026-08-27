@@ -11,6 +11,11 @@ import { ScreenContainer } from "@/shared/components/ScreenContainer";
 import { colors, radius, spacing } from "@/shared/theme";
 import { totalDistanceKm } from "@/shared/utils/geo";
 
+function describeError(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  return "Sürüş sonlandırılamadı.";
+}
+
 function formatElapsed(ms: number): string {
   const totalSeconds = Math.max(0, Math.floor(ms / 1000));
   const hours = Math.floor(totalSeconds / 3600);
@@ -52,7 +57,12 @@ export default function AktifSurusScreen() {
         style: "destructive",
         onPress: async () => {
           setStopping(true);
-          await stop();
+          try {
+            await stop();
+          } catch (err) {
+            Alert.alert("Sonlandırılamadı", describeError(err));
+            setStopping(false);
+          }
         },
       },
     ]);

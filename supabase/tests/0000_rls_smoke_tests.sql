@@ -109,6 +109,19 @@ begin
     raise exception 'FAIL(profiles): kullanıcı kendi is_banned alanını true yapabildi!';
   end if;
 
+  -- A kendi username'ini kurala uymayan bir değere çevirmeye çalışır —
+  -- profiles_username_format CHECK constraint reddetmeli (bkz.
+  -- 0010_username_format_constraint.sql; istemciyi atlayıp doğrudan
+  -- yazan bir istemciye karşı DB seviyesi savunma).
+  perform pg_temp.act_as(user_a_id);
+  begin
+    update profiles set username = 'Geçersiz Ad!' where id = user_a_id;
+    raise exception 'FAIL(profiles): kurala uymayan bir username kabul edildi (CHECK constraint çalışmıyor)!';
+  exception
+    when check_violation then
+      null; -- beklenen davranış
+  end;
+
   raise notice 'PASS: profiles RLS + guard trigger testleri geçti.';
 end $$;
 

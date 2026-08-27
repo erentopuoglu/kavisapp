@@ -120,10 +120,13 @@ export function AppMapView({
 type AppMapMarkerProps = {
   marker: MapMarkerData;
   children?: ReactNode;
+  draggable?: boolean;
+  onDragEnd?: (coordinate: LatLng) => void;
 };
 
 // Gerçek haritada nokta çizer; burada sadece AppMapView'in sayabilmesi için
-// var — kendi başına hiçbir şey render etmez.
+// var — kendi başına hiçbir şey render etmez. draggable/onDragEnd MapService.tsx
+// ile aynı imzayı korumak için var, Expo Go'da sürükleme simüle edilmiyor.
 export function AppMapMarker(_props: AppMapMarkerProps) {
   return null;
 }

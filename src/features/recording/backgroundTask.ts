@@ -17,6 +17,14 @@ TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }) => {
 
   const { locations } = (data as LocationTaskData | undefined) ?? { locations: [] };
   if (locations.length > 0) {
-    useRecordingStore.getState().ingestLocations(locations);
+    // Savunmacı: bu callback OS tarafından tetikleniyor, burada atılan bir
+    // hata kullanıcıya hiçbir şekilde ulaşmaz (ekran/Alert yok) — tek bir
+    // bozuk konum noktası yüzünden geri kalan kaydın tamamen sessizce
+    // durmasındansa, o güncellemeyi loglayıp atlamak tercih edildi.
+    try {
+      useRecordingStore.getState().ingestLocations(locations);
+    } catch (err) {
+      console.warn("[kavis-location-task] konum işlenemedi:", err);
+    }
   }
 });

@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { useState } from "react";
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, View } from "react-native";
 
 import { useAuthStore } from "@/features/auth/store/useAuthStore";
 import { AppText } from "@/shared/components/AppText";
@@ -8,16 +9,28 @@ import { Button } from "@/shared/components/Button";
 import { ScreenContainer } from "@/shared/components/ScreenContainer";
 import { colors, radius, spacing } from "@/shared/theme";
 
+function describeError(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  return "Çıkış yapılamadı.";
+}
+
 export default function ProfilScreen() {
   const session = useAuthStore((state) => state.session);
   const profile = useAuthStore((state) => state.profile);
   const profileError = useAuthStore((state) => state.profileError);
   const refreshProfile = useAuthStore((state) => state.refreshProfile);
   const signOut = useAuthStore((state) => state.signOut);
+  const [signingOut, setSigningOut] = useState(false);
 
   const handleSignOut = async () => {
-    await signOut();
-    router.replace("/(auth)/giris");
+    setSigningOut(true);
+    try {
+      await signOut();
+      router.replace("/(auth)/giris");
+    } catch (err) {
+      Alert.alert("Çıkış yapılamadı", describeError(err));
+      setSigningOut(false);
+    }
   };
 
   return (
@@ -95,7 +108,13 @@ export default function ProfilScreen() {
           style={styles.legalButton}
         />
 
-        <Button label="Çıkış Yap" onPress={handleSignOut} variant="danger" style={styles.signOutButton} />
+        <Button
+          label="Çıkış Yap"
+          onPress={handleSignOut}
+          variant="danger"
+          loading={signingOut}
+          style={styles.signOutButton}
+        />
 
         <AppText variant="caption" color={colors.textSecondary} style={styles.dangerZoneLabel}>
           Tehlikeli Bölge

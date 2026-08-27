@@ -99,6 +99,10 @@ export type CreateRouteInput = {
   region?: string;
   estimatedDurationMin?: number;
   points: LatLng[];
+  /** Verilirse (ör. Directions API'den gelen gerçek yol mesafesi) istemci
+   *  haversine yaklaşıklığı yerine bu kullanılır — bkz. rota/olustur.tsx
+   *  "Yol Takipli" modu ve README'deki distance_km teknik borç notu. */
+  distanceKm?: number;
 };
 
 export async function createRoute(input: CreateRouteInput): Promise<Route> {
@@ -114,7 +118,10 @@ export async function createRoute(input: CreateRouteInput): Promise<Route> {
   } = await supabase.auth.getUser();
   if (!user) throw new Error("Rota oluşturmak için giriş yapmalısınız.");
 
-  const distanceKm = Math.round(totalDistanceKm(input.points) * 100) / 100;
+  const distanceKm =
+    input.distanceKm !== undefined
+      ? Math.round(input.distanceKm * 100) / 100
+      : Math.round(totalDistanceKm(input.points) * 100) / 100;
 
   const { data, error } = await supabase
     .from("routes")

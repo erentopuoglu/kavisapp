@@ -469,11 +469,9 @@ Fast Refresh yeterli.
 
 ## Teknik Borç (Faz 3 ekleri)
 
-- **İtiraz/inceleme mekanizması yok:** Bir POI otomatik gizlendiğinde
-  sahibinin itiraz edebileceği veya bir moderatörün raporları inceleyip
-  geri açabileceği bir arayüz henüz yok (`reports.status` alanı bunun için
-  hazır — `reviewed`/`dismissed` durumları tanımlı ama hiçbir yerden
-  tetiklenmiyor). İleride bir "Moderasyon" ekranı veya web paneli gerekir.
+- ~~İtiraz/inceleme mekanizması yok~~ — **çözüldü**, bkz. "Admin /
+  Moderasyon" bölümü (bekleyen raporları inceleme, gizli içeriği geri açma,
+  reddetme).
 - **Hız sınırı bypass edilebilir:** `reports_insert_own` RLS politikası
   hâlâ `auth.uid() = reporter_id` ile doğrudan insert'e izin veriyor; hız
   sınırı sadece `submit-report` Edge Function'ında uygulanıyor. Teknik
@@ -1148,6 +1146,112 @@ Sadece JS + yeni bir Edge Function — `expo prebuild` gerekmiyor.
 - **HTTP smoke test'i CI'da otomatik çalışmıyor:** Elle çalıştırılması
   gerekiyor (local/staging'de), `0000_rls_smoke_tests.sql` ile aynı sınır.
 
+## Yol Takipli Rota Oluşturma (Mapbox Directions + Geocoding)
+
+Rota oluşturma ekranına (`rota/olustur.tsx`) iki mod eklendi:
+
+- **Yol Takipli (varsayılan):** Kullanıcı haritaya dokunarak (veya arama
+  kutusundan) başlangıç ve bitiş noktasını seçer; Mapbox **Directions
+  API**'si gerçek yolu (asfaltı) takip eden rotayı, mesafeyi ve tahmini
+  süreyi döner. Haritaya üçüncü bir dokunuş **ara nokta (waypoint)**
+  ekler; her nokta (başlangıç/ara/bitiş) **sürüklenebilir** — bırakınca
+  rota otomatik yeniden hesaplanır.
+- **Serbest Çizim:** Faz 1'den beri var olan nokta-nokta çizim, birebir
+  korunuyor (patika/özel güzergah için).
+
+Ayrıca arama kutusu Mapbox **Geocoding API**'sini kullanır ("Anamur" gibi
+bir yer adı yazıp sonuçtan seçmek), sonuçlar `country=tr` ile Türkiye'ye
+önceliklendirilir. Harita, konum izni **zaten verilmişse** kullanıcının
+mevcut konumunda açılır (ayrı bir izin isteme akışı yok).
+
+### Mapbox Maliyet Analizi (doğrulanmış, mapbox.com/pricing — Ağustos 2026)
+
+| API | Ücretsiz kota (aylık) | Aşım ücreti (1000 istek başına) |
+|---|---|---|
+| Directions API | 100.000 istek | 100K–500K: $2.00 · 500K–1M: $1.60 · 1M+: $1.20 |
+| Geocoding API (Temporary) | 100.000 istek | 100K–500K: $0.75 · 500K–1M: $0.60 · 1M+: $0.45 |
+
+- Her iki uç da harita tile'ları için zaten kullanılan **aynı `pk.` public
+  token** ile çağrılıyor — yeni bir secret/Edge Function gerekmedi
+  (Directions/Geocoding Mapbox'ta public token scope'una açık).
+- Geocoding **"temporary"** (varsayılan) modda kullanılıyor — sonuçlar
+  kalıcı saklanmıyor/önbelleklenmiyor, kullanıcının seçtiği tek koordinat
+  normal bir rota noktası olarak kaydediliyor. Mapbox'ın "permanent
+  geocoding" ($5/1000, adres verisini kendi sisteminizde saklayıp tekrar
+  kullanmayı gerektiren bir ToS kategorisi) kapsamına girmiyoruz.
+- Kavis'in mevcut ölçeğinde (niş, düşük hacimli kullanıcı kitlesi) her iki
+  ücretsiz kota da rahatlıkla yeterli. **Asıl maliyet riski toplam hacim
+  değil, sürükleme sırasında istek patlaması** — bu yüzden waypoint
+  sürüklemesi sadece `onDragEnd`'de (bırakınca, tek istek) Directions'ı
+  tetikliyor, sürükleme sırasında (`onDrag`) hiç API çağrısı yapılmıyor.
+  Arama kutusu da 400ms debounce'lu (`SEARCH_DEBOUNCE_MS`).
+
+### Client-Taraflı Günlük İstek Sınırı (`src/lib/map/rateLimit.ts`)
+
+Cihaz-yerel (AsyncStorage) bir sayaç: Directions için günde 50, Geocoding
+için günde 150 istek. **Bu bir güvenlik sınırı DEĞİL** — tamamen
+istemcide tutulduğu için uygulama verisini/depolamayı temizleyen, cihaz
+değiştiren ya da ağ trafiğini taklit eden bir kullanıcı kolayca aşabilir.
+Amacı kötüye kullanımı kesin engellemek değil, normal kullanım sırasında
+bir kod hatası/döngüsü yüzünden yanlışlıkla binlerce isteğin gitmesini
+önlemek. Gerçek kötüye kullanım koruması gerekirse sunucu taraflı bir
+proxy/Edge Function ile IP/kullanıcı bazlı sayaç gerekir (bkz. aşağıdaki
+Teknik Borç).
+
+### Kurulum ve Test
+
+- Ek bir `.env` değişkeni **gerekmiyor** — mevcut
+  `EXPO_PUBLIC_MAPBOX_PUBLIC_TOKEN` yeniden kullanılıyor.
+- Manuel test: `rota/olustur.tsx` → Yol Takipli modda iki nokta seçip
+  gerçek yol geometrisinin çizildiğini, mesafe/sürenin dolduğunu
+  doğrulayın; bir ara nokta ekleyip sürükleyin, rotanın yeniden
+  hesaplandığını görün; arama kutusuna bir yer adı yazıp seçin; Serbest
+  Çizim moduna geçip eski davranışın aynen çalıştığını doğrulayın; uçak
+  modunda Directions hatasının net bir mesaj gösterdiğini kontrol edin.
+- Bu ortamda gerçek ağ çağrısı içeren bir otomatik test çalıştırılamıyor
+  (önceki fazlarla aynı sınır) — `tsc`/`lint` temiz, canlı test emülatörde
+  yapılmalı.
+
+## Tasarım Kararları (Yol Takipli Rota Oluşturma)
+
+- **Adres arama bu fazda eklendi** (başlangıçta ayrı bir iş kalemi olarak
+  düşünülmüştü, kullanıcı onayıyla dahil edildi) — `src/lib/map/geocoding.ts`.
+- **Yeni ara nokta her zaman bitişten hemen önce eklenir** (basit,
+  öngörülebilir davranış) — "en yakın segmente enjekte etme" gibi daha
+  karmaşık bir yerleştirme mantığı kapsam dışı bırakıldı; kullanıcı
+  ekledikten sonra sürükleyerek ince ayar yapabiliyor.
+- **"driving" profili kullanılıyor** — Mapbox'ta motosiklete özel bir
+  profil yok; "driving" karayolu ağını takip ediyor, amaç için yeterli.
+- **Directions API sonucu form adımında salt-okunur gösteriliyor**
+  (kullanıcı elle değiştiremiyor) — Serbest Çizim modunun aksine, burada
+  veri güvenilir (gerçek yol mesafesi) olduğu için elle üzerine yazılmasına
+  izin verilmedi.
+- **Mapbox `@rnmapbox/maps` (render) ile Directions/Geocoding (düz HTTP)
+  ayrı dosyalarda** (`MapService.tsx` vs `directions.ts`/`geocoding.ts`) —
+  ikisi de "sağlayıcıya özgü kod sadece burada kalır" ilkesini koruyor,
+  ama Directions/Geocoding native modüle bağımlı olmadığı için Expo Go'da
+  da mock gerektirmeden çalışıyor.
+
+## Teknik Borç (Yol Takipli Rota Oluşturma ekleri)
+
+- **`routes.distance_km` istemci-hesaplı borcu artık SADECE Serbest Çizim
+  modu için geçerli** (aşağıdaki genel "Teknik Borç" bölümündeki not
+  güncellendi) — Yol Takipli modda gerçek yol mesafesi (Directions API)
+  kullanılıyor.
+- **Sunucu tarafında hâlâ hiçbir doğrulama yok:** İstemci hangi
+  `distance_km`'i (Directions'tan gelse bile) gönderirse o kaydediliyor —
+  kötü niyetli bir istemci sahte bir değer gönderebilir. Düşük öncelik
+  (sadece bilgi amaçlı bir alan), ama ileride önemli olursa `path`
+  sütunundan `ST_Length` ile sunucuda yeniden hesaplanmalı.
+- **Günlük istek sınırı client-taraflı ve suistimale açık** (yukarıda
+  detaylı açıklandı) — gerçek koruma için sunucu taraflı bir proxy
+  gerekir, bu fazda kapsam dışı bırakıldı.
+- **Waypoint ekleme "en yakın segment" mantığı yok** — her zaman bitişten
+  hemen önce eklenir (yukarıda "Tasarım Kararları"nda açıklandı).
+- **Directions/Geocoding hataları offline'da genel bir mesaj gösteriyor**
+  — ayrıntılı hata sınıflandırması (zaman aşımı vs. sunucu hatası vs. rota
+  bulunamadı) yapılmadı, tek bir kullanıcı dostu mesajla özetleniyor.
+
 ## Tasarım Kararları (Faz 1)
 
 - **Rota geometrisi:** Yazarken (insert) WKT metni (`"LINESTRING(lng lat, ...)"`)
@@ -1198,15 +1302,20 @@ Sadece JS + yeni bir Edge Function — `expo prebuild` gerekmiyor.
 
 ## Teknik Borç
 
-- **`routes.distance_km` client-hesaplı** (Faz 1): rota oluşturma ekranında
-  dokunulan noktalar üzerinden istemcide haversine ile hesaplanıp gönderiliyor.
-  Güvenlik açısından kritik değil (sadece bilgi amaçlı bir alan), ama
-  yanlış/optimistik girilebilir. İleride bu alan filtreleme veya istatistik
-  (örn. "en uzun rotalar" sıralaması, toplam km istatistikleri) için
-  kullanılmaya başlanırsa, `path` sütunundan `ST_Length(path) / 1000` ile
-  sunucuda (trigger veya `increment_route_view_count` benzeri bir
-  `SECURITY DEFINER` fonksiyonla) yeniden hesaplanıp client değerinin
-  üzerine yazılması gerekir.
+- **`routes.distance_km` client-hesaplı** (Faz 1) — **sadece Serbest Çizim
+  modu için geçerli** (bkz. "Yol Takipli Rota Oluşturma" bölümü, o modda
+  Mapbox Directions API'nin döndüğü gerçek yol mesafesi kullanılıyor):
+  rota oluşturma ekranında dokunulan noktalar üzerinden istemcide
+  haversine ile hesaplanıp gönderiliyor. Güvenlik açısından kritik değil
+  (sadece bilgi amaçlı bir alan), ama yanlış/optimistik girilebilir —
+  Directions API kullanılan modda bile istemci `distanceKm`'i olduğu gibi
+  gönderiyor, sunucu tarafında bir doğrulama yok. İleride bu alan
+  filtreleme veya istatistik (örn. "en uzun rotalar" sıralaması, toplam km
+  istatistikleri) için kullanılmaya başlanırsa, `path` sütunundan
+  `ST_Length(path) / 1000` ile sunucuda (trigger veya
+  `increment_route_view_count` benzeri bir `SECURITY DEFINER`
+  fonksiyonla) yeniden hesaplanıp client değerinin üzerine yazılması
+  gerekir.
 
 ## Sonraki Fazlar
 

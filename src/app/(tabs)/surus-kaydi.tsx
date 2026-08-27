@@ -45,6 +45,30 @@ export default function SurusKaydiScreen() {
   const [showLocationRationale, setShowLocationRationale] = useState<"foreground" | "background" | null>(null);
   const [starting, setStarting] = useState(false);
   const [importing, setImporting] = useState(false);
+  const [resumingRecovered, setResumingRecovered] = useState(false);
+  const [discardingRecovered, setDiscardingRecovered] = useState(false);
+
+  const handleResumeRecovered = async () => {
+    setResumingRecovered(true);
+    try {
+      await resumeRecoveredAsFinished();
+      router.push("/surus/ozet");
+    } catch (err) {
+      Alert.alert("Sonlandırılamadı", describeError(err));
+      setResumingRecovered(false);
+    }
+  };
+
+  const handleDiscardRecovered = async () => {
+    setDiscardingRecovered(true);
+    try {
+      await discardRecovered();
+    } catch (err) {
+      Alert.alert("Silinemedi", describeError(err));
+    } finally {
+      setDiscardingRecovered(false);
+    }
+  };
 
   const loadRides = useCallback(async () => {
     if (!session) return;
@@ -161,13 +185,17 @@ export default function SurusKaydiScreen() {
               <Button
                 label="Bitir ve Özetle"
                 variant="secondary"
-                onPress={async () => {
-                  await resumeRecoveredAsFinished();
-                  router.push("/surus/ozet");
-                }}
+                onPress={handleResumeRecovered}
+                loading={resumingRecovered}
                 style={styles.recoveryButton}
               />
-              <Button label="Sil" variant="danger" onPress={() => discardRecovered()} style={styles.recoveryButton} />
+              <Button
+                label="Sil"
+                variant="danger"
+                onPress={handleDiscardRecovered}
+                loading={discardingRecovered}
+                style={styles.recoveryButton}
+              />
             </View>
           </View>
         ) : null}

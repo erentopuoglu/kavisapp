@@ -3,14 +3,15 @@ import { PropsWithChildren, ReactNode, useEffect, useMemo } from "react";
 import { StyleSheet, View, ViewStyle } from "react-native";
 
 import { colors } from "@/shared/theme";
+import { MAPBOX_PUBLIC_TOKEN, warnIfMapboxTokenMissing } from "@/lib/map/mapboxToken";
 import type { CameraPosition, LatLng, MapMarkerData } from "@/lib/map/types";
 
 // TEK GİRİŞ NOKTASI: Uygulamanın geri kalanı haritayla yalnızca bu dosyadaki
 // bileşenler üzerinden konuşur. @rnmapbox/maps'e özgü hiçbir tip veya API
 // başka bir dosyaya sızmamalı — sağlayıcı değişimi (örn. MapLibre) sadece
-// burayı yeniden yazmakla mümkün olmalı.
-
-const MAPBOX_PUBLIC_TOKEN = process.env.EXPO_PUBLIC_MAPBOX_PUBLIC_TOKEN ?? "";
+// burayı yeniden yazmakla mümkün olmalı. (Directions/Geocoding için aynı
+// ilke src/lib/map/directions.ts ve geocoding.ts'de — onlar @rnmapbox/maps
+// native modülüne değil düz HTTP'ye dayandığı için ayrı dosyalar.)
 
 // Konum verilmediğinde varsayılan kamera — Türkiye geneli.
 const DEFAULT_CENTER: [number, number] = [35.2433, 38.9637];
@@ -19,11 +20,7 @@ const DEFAULT_ZOOM = 5;
 let isConfigured = false;
 function ensureConfigured() {
   if (isConfigured) return;
-  if (!MAPBOX_PUBLIC_TOKEN && __DEV__) {
-    console.warn(
-      "EXPO_PUBLIC_MAPBOX_PUBLIC_TOKEN tanımlı değil — harita boş/hatalı görünebilir. .env dosyanızı kontrol edin."
-    );
-  }
+  warnIfMapboxTokenMissing();
   Mapbox.setAccessToken(MAPBOX_PUBLIC_TOKEN);
   isConfigured = true;
 }
@@ -115,13 +112,24 @@ export function AppMapView({
 type AppMapMarkerProps = {
   marker: MapMarkerData;
   children?: ReactNode;
+  /** Kullanıcının işaretçiyi parmağıyla sürükleyip taşıyabilmesini sağlar
+   *  (ör. rota oluşturmada ara nokta/waypoint'i yeniden konumlandırma). */
+  draggable?: boolean;
+  onDragEnd?: (coordinate: LatLng) => void;
 };
 
-export function AppMapMarker({ marker, children }: AppMapMarkerProps) {
+export function AppMapMarker({ marker, children, draggable = false, onDragEnd }: AppMapMarkerProps) {
   return (
     <Mapbox.PointAnnotation
       id={marker.id}
       coordinate={[marker.coordinate.longitude, marker.coordinate.latitude]}
+      draggable={draggable}
+      onDragEnd={(feature) => {
+        if (!onDragEnd) return;
+        const point = feature.geometry as GeoJSON.Point;
+        const [longitude, latitude] = point.coordinates;
+        onDragEnd({ latitude, longitude });
+      }}
     >
       <View>{children ?? <View style={styles.defaultMarker} />}</View>
     </Mapbox.PointAnnotation>
