@@ -34,6 +34,7 @@ export default function SurusOzetScreen() {
   const endedAtMs = useRecordingStore((state) => state.endedAtMs);
   const finalize = useRecordingStore((state) => state.finalize);
   const discard = useRecordingStore((state) => state.discard);
+  const hasMockedLocation = useRecordingStore((state) => state.hasMockedLocation);
 
   const [selectedRoute, setSelectedRoute] = useState<Route | null>(null);
   const [showRoutePicker, setShowRoutePicker] = useState(false);
@@ -64,6 +65,7 @@ export default function SurusOzetScreen() {
         startedAtMs,
         endedAtMs: endedAtMs ?? Date.now(),
         routeId: selectedRoute?.id,
+        isSuspicious: hasMockedLocation,
       });
       await finalize();
       router.replace({ pathname: "/surus/[id]", params: { id: ride.id } });

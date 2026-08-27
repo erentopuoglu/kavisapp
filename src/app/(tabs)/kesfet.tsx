@@ -4,6 +4,8 @@ import { router } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, View } from "react-native";
 
+import { useAuthStore } from "@/features/auth/store/useAuthStore";
+import { LeaderboardView } from "@/features/leaderboard/components/LeaderboardView";
 import { fetchNearbyRoutes, fetchRoutes } from "@/features/routes/api/routesApi";
 import { RouteCard } from "@/features/routes/components/RouteCard";
 import type { Route, RouteSortOption } from "@/features/routes/types";
@@ -19,6 +21,12 @@ import { TextField } from "@/shared/components/TextField";
 import { colors, radius, spacing } from "@/shared/theme";
 
 type SortMode = RouteSortOption | "nearby";
+type ViewMode = "routes" | "leaderboard";
+
+const VIEW_MODES: { key: ViewMode; label: string }[] = [
+  { key: "routes", label: "Rotalar" },
+  { key: "leaderboard", label: "Liderlik Tablosu" },
+];
 
 const SORT_OPTIONS: { key: SortMode; label: string }[] = [
   { key: "newest", label: "En Yeni" },
@@ -32,6 +40,8 @@ function describeError(err: unknown): string {
 }
 
 export default function KesfetScreen() {
+  const session = useAuthStore((state) => state.session);
+  const [viewMode, setViewMode] = useState<ViewMode>("routes");
   const [searchText, setSearchText] = useState("");
   const [sort, setSort] = useState<SortMode>("newest");
   const [routes, setRoutes] = useState<Route[]>([]);
@@ -121,59 +131,84 @@ export default function KesfetScreen() {
 
   return (
     <ScreenContainer padded={false}>
-      <View style={styles.header}>
-        <TextField placeholder="Rota veya bölge ara..." value={searchText} onChangeText={setSearchText} />
-        <View style={styles.sortRow}>
-          {SORT_OPTIONS.map((option) => {
-            const active = sort === option.key;
-            return (
-              <Pressable
-                key={option.key}
-                onPress={() => handleSelectSort(option.key)}
-                style={[styles.sortPill, active && styles.sortPillActive]}
-              >
-                <AppText variant="caption" color={active ? colors.textPrimary : colors.textSecondary}>
-                  {option.label}
-                </AppText>
-              </Pressable>
-            );
-          })}
-        </View>
+      <View style={styles.viewModeRow}>
+        {VIEW_MODES.map((option) => {
+          const active = viewMode === option.key;
+          return (
+            <Pressable
+              key={option.key}
+              onPress={() => setViewMode(option.key)}
+              style={[styles.viewModeTab, active && styles.viewModeTabActive]}
+            >
+              <AppText variant="bodyMedium" color={active ? colors.primary : colors.textSecondary}>
+                {option.label}
+              </AppText>
+            </Pressable>
+          );
+        })}
       </View>
 
-      {loading ? (
-        <View style={styles.centerFill}>
-          <ActivityIndicator color={colors.primary} />
-        </View>
-      ) : error ? (
-        <View style={styles.centerFill}>
-          <Ionicons name="alert-circle-outline" size={32} color={colors.danger} />
-          <AppText variant="body" color={colors.danger} style={styles.errorText}>
-            {error}
-          </AppText>
-        </View>
+      {viewMode === "leaderboard" ? (
+        <LeaderboardView userId={session?.user.id} />
       ) : (
-        <FlatList
-          data={routes}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContent}
-          keyboardShouldPersistTaps="handled"
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.primary} />}
-          renderItem={({ item }) => (
-            <RouteCard
-              route={item}
-              onPress={() => router.push({ pathname: "/rota/[id]", params: { id: item.id } })}
-            />
-          )}
-          ListEmptyComponent={
+        <>
+          <View style={styles.header}>
+            <TextField placeholder="Rota veya bölge ara..." value={searchText} onChangeText={setSearchText} />
+            <View style={styles.sortRow}>
+              {SORT_OPTIONS.map((option) => {
+                const active = sort === option.key;
+                return (
+                  <Pressable
+                    key={option.key}
+                    onPress={() => handleSelectSort(option.key)}
+                    style={[styles.sortPill, active && styles.sortPillActive]}
+                  >
+                    <AppText variant="caption" color={active ? colors.textPrimary : colors.textSecondary}>
+                      {option.label}
+                    </AppText>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+
+          {loading ? (
             <View style={styles.centerFill}>
-              <Ionicons name="map-outline" size={32} color={colors.textDisabled} />
-              <AppText variant="body" color={colors.textSecondary} style={styles.errorText}>
-                {sort === "nearby" ? "Yakınında rota bulunamadı." : "Henüz rota yok."}
+              <ActivityIndicator color={colors.primary} />
+            </View>
+          ) : error ? (
+            <View style={styles.centerFill}>
+              <Ionicons name="alert-circle-outline" size={32} color={colors.danger} />
+              <AppText variant="body" color={colors.danger} style={styles.errorText}>
+                {error}
               </AppText>
             </View>
-          }
-        />
+          ) : (
+            <FlatList
+              data={routes}
+              keyExtractor={(item) => item.id}
+              contentContainerStyle={styles.listContent}
+              keyboardShouldPersistTaps="handled"
+              refreshControl={
+                <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.primary} />
+              }
+              renderItem={({ item }) => (
+                <RouteCard
+                  route={item}
+                  onPress={() => router.push({ pathname: "/rota/[id]", params: { id: item.id } })}
+                />
+              )}
+              ListEmptyComponent={
+                <View style={styles.centerFill}>
+                  <Ionicons name="map-outline" size={32} color={colors.textDisabled} />
+                  <AppText variant="body" color={colors.textSecondary} style={styles.errorText}>
+                    {sort === "nearby" ? "Yakınında rota bulunamadı." : "Henüz rota yok."}
+                  </AppText>
+                </View>
+              }
+            />
+          )}
+        </>
       )}
 
       <LocationRationaleModal
@@ -188,6 +223,21 @@ export default function KesfetScreen() {
 }
 
 const styles = StyleSheet.create({
+  viewModeRow: {
+    flexDirection: "row",
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
+  },
+  viewModeTab: {
+    flex: 1,
+    alignItems: "center",
+    paddingVertical: spacing.md,
+    borderBottomWidth: 2,
+    borderBottomColor: "transparent",
+  },
+  viewModeTabActive: {
+    borderBottomColor: colors.primary,
+  },
   header: {
     paddingHorizontal: spacing.md,
     paddingTop: spacing.md,

@@ -553,6 +553,80 @@ begin
   raise notice 'PASS: admin/moderasyon RLS testleri geçti (is_admin guard, gizli içerik + rapor görünürlüğü, banlı kullanıcı insert engeli).';
 end $$;
 
+-- ---------------------------------------------------------------------
+-- 10) HAFTALIK LİDERLİK TABLOSU / ROZETLER (0011_weekly_leaderboard_badges.sql)
+-- ---------------------------------------------------------------------
+do $$
+declare
+  user_a_id uuid := '00000000-0000-0000-0000-0000000000aa';
+  user_b_id uuid := '00000000-0000-0000-0000-0000000000bb';
+  new_route_id uuid;
+  any_badge_id uuid;
+  leak_count int;
+  leaderboard_row_count int;
+begin
+  -- A bir rota oluşturup o rotada canlı kayıt bir sürüş yapar. distance_km
+  -- (routes.distance_km NULLABLE — bkz. Faz 1 teknik borcu) açıkça
+  -- veriliyor, aksi halde %50 eşik karşılaştırması NULL'a karşı yapılır ve
+  -- sürüş hiçbir zaman "bu rotayı sürdü" sayılmaz.
+  perform pg_temp.act_as(user_a_id);
+  insert into routes (creator_id, title, path, distance_km)
+  values (user_a_id, 'Liderlik Test Rotası', st_geogfromtext('LINESTRING(29.0 41.0, 29.2 41.2)'), 10)
+  returning id into new_route_id;
+
+  insert into recorded_rides (user_id, route_id, track, distance_km, started_at, ended_at, source)
+  values (
+    user_a_id, new_route_id,
+    st_geogfromtext('LINESTRING(29.0 41.0, 29.2 41.2)'),
+    10, -- rotanın tamamı, %50 eşiğini rahatça geçer
+    now(), now(), 'recorded'
+  );
+
+  -- B, A'nın recorded_rides satırını DOĞRUDAN (leaderboard fonksiyonunu
+  -- atlayıp) göremez — bu, get_weekly_route_leaderboard'ın security
+  -- definer olması YÜZÜNDEN recorded_rides'ın temel RLS'inin gevşemediğini
+  -- doğruluyor (fonksiyon sadece KENDİ İÇİNDE bypass ediyor, B'nin normal
+  -- sorgularını etkilemiyor).
+  perform pg_temp.act_as(user_b_id);
+  select count(*) into leak_count from recorded_rides where user_id = user_a_id;
+  if leak_count <> 0 then
+    raise exception 'FAIL(leaderboard): kullanıcı B, A''nın recorded_rides satırını doğrudan görebildi!';
+  end if;
+
+  -- Ama B, liderlik tablosu FONKSİYONUNU çağırabilir ve A'nın aktivitesi
+  -- (sadece toplam sayı olarak, username ile) orada görünür — bu, RLS
+  -- ihlali değil, fonksiyonun TASARLANMIŞ davranışı (madde: sıralama
+  -- görünür, ham veri değil).
+  select count(*) into leaderboard_row_count from get_weekly_route_leaderboard();
+  if leaderboard_row_count = 0 then
+    raise exception 'FAIL(leaderboard): get_weekly_route_leaderboard hiç sonuç döndürmedi (beklenen: en az A''nın satırı)!';
+  end if;
+
+  -- A kendine doğrudan (award_badge_if_needed'i atlayıp) bir rozet
+  -- veremez — user_badges'te hiçbir insert politikası yok.
+  perform pg_temp.act_as(user_a_id);
+  select id into any_badge_id from badges limit 1;
+  begin
+    insert into user_badges (user_id, badge_id) values (user_a_id, any_badge_id);
+    raise exception 'FAIL(user_badges): kullanıcı kendine doğrudan rozet verebildi!';
+  exception
+    when insufficient_privilege then
+      null; -- beklenen davranış
+  end;
+
+  -- A, weekly_awards'a da yazamaz (hiçbir insert politikası yok).
+  begin
+    insert into weekly_awards (week_start, category, user_id)
+    values (current_date, 'test_category', user_a_id);
+    raise exception 'FAIL(weekly_awards): kullanıcı doğrudan weekly_awards''a yazabildi!';
+  exception
+    when insufficient_privilege then
+      null; -- beklenen davranış
+  end;
+
+  raise notice 'PASS: haftalık liderlik tablosu / rozet RLS testleri geçti (recorded_rides sızmıyor, user_badges/weekly_awards yazılamıyor).';
+end $$;
+
 raise notice '=== TÜM RLS SMOKE TESTLERİ BAŞARIYLA GEÇTİ ===';
 
 rollback; -- Test verilerini kalıcı bırakmamak için değişiklikleri geri al.

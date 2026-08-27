@@ -1252,6 +1252,96 @@ Teknik Borç).
   — ayrıntılı hata sınıflandırması (zaman aşımı vs. sunucu hatası vs. rota
   bulunamadı) yapılmadı, tek bir kullanıcı dostu mesajla özetleniyor.
 
+## Haftalık Liderlik Tablosu + Rozet Sistemi
+
+Amaç: kullanıcıların düzenli girmesi ve içerik üretmesi — **mesafe/hız
+temelli hiçbir sıralama yok** (motosiklet uygulamasında tehlikeli sürüşü
+teşvik etmemek için bilinçli bir tasarım kararı), keşif ve katkı
+ödüllendiriliyor.
+
+- **Liderlik tablosu** (Keşfet sekmesi, üstte "Rotalar"/"Liderlik Tablosu"
+  şeridi — ayrı bir tab bar sekmesi DEĞİL): haftalık, 4 kategori (en çok
+  farklı rota süren, en çok rota paylaşan, en çok POI ekleyen, en çok
+  cevabı "en iyi" seçilen). Mesafe sadece kişisel bir bilgi kutusunda
+  ("bu hafta X km sürdün") gösteriliyor, hiçbir sıralamada yok.
+- **Rozetler tamamen kişisel** — `user_badges` RLS'i sadece sahibine
+  select izni veriyor, başka kimsenin rozetleri hiçbir yerde
+  görüntülenmiyor/karşılaştırılmıyor. Profil'de "Rozetlerim" bölümünde
+  kazanılmamış rozetler de (soluk/kilitli) gösteriliyor — koleksiyon
+  hissi için.
+- **Hesaplama tamamen sunucuda** (`supabase/migrations/0011_weekly_leaderboard_badges.sql`):
+  istemci hiçbir sayı göndermiyor, sadece 4 `stable`/`security definer`
+  SQL fonksiyonundan SELECT ile okuyor.
+- **Hile koruması (4 katman):**
+  1. `recorded_rides.source` (`'recorded' | 'gpx_import'`) — sadece canlı
+     kayıt sayılır, GPX içe aktarma asla girmez.
+  2. `recorded_rides.is_suspicious` — kayıt sırasında herhangi bir
+     `expo-location` noktası `coords.mocked: true` (Android'de gerçek bir
+     sinyal, sahte konum uygulamalarını yakalar) geldiyse true; sürüş
+     kullanıcıya normal görünür, sadece sıralamaya girmez.
+  3. Sürüş, bağlı olduğu rotanın mesafesinin en az **%50'sini**
+     kapsamıyorsa "o rotayı sürdü" sayılmıyor (aksi halde saniyeler içinde
+     başlat/durdur ile onlarca rotayı "sürmüş" gibi görünmek mümkün
+     olurdu).
+  4. Sürüşün ortalama hızı >200 km/sa ise (nokta bazlı 250 km/sa GPS
+     sıçraması filtresinden ayrı, sürüş GENELİ bir sağlık kontrolü)
+     sıralamaya girmiyor.
+  Her ikisi de (`source`, `is_suspicious`) INSERT'ten sonra bir guard
+  trigger ile donuyor — sahibi bile sonradan değiştiremez (is_banned/
+  is_hidden ile aynı desen). **Dürüst sınır:** bu, uygulamayı atlayıp
+  doğrudan REST ile sahte veri yazan çok kararlı bir saldırganı
+  engellemez — o seviye bir koruma (cihaz attestation'ı vb.) bu
+  özelliğin kapsamını fazlasıyla aşıyor; gerçekçi tehdit modeli
+  uygulamanın kendi GPX özelliği ve yaygın sahte-konum uygulamaları.
+- **Haftalık ödül dağıtımı cron GEREKTİRMİYOR:** `finalize_weekly_awards()`
+  idempotent — liderlik tablosu ekranı her açıldığında çağrılır, geçen
+  hafta zaten işlendiyse no-op. Tam saatinde garanti yok (ilk açan
+  kullanıcıyla dağıtılır, genelde dakikalar içinde) — `pg_cron` alternatifi
+  var ama yeni bir altyapı bağımlılığı ekliyor, bu fazda bilinçli olarak
+  eklenmedi.
+- **Engellenen kullanıcılar liderlik tablosunda görünmez** — forum'daki
+  aynı `not exists (select 1 from blocks where blocker_id = auth.uid()
+  and blocked_id = ...)` deseni her kategori fonksiyonuna da eklendi.
+- **Gösterilen kullanıcı bilgisi minimum:** her fonksiyon sadece
+  `(username, sayı)` döner — id/e-posta/profil detayı hiçbir zaman
+  sızmaz.
+
+### Kurulum ve Test
+
+- Ek bir `.env` değişkeni gerekmiyor.
+- Migration'ı uygulayın: `supabase db push`.
+- RLS smoke test dosyasına yeni bir "10) HAFTALIK LİDERLİK TABLOSU /
+  ROZETLER" bölümü eklendi — recorded_rides'ın leaderboard fonksiyonu
+  üzerinden sızmadığını, kullanıcının kendine rozet veremediğini,
+  weekly_awards'a yazamadığını doğruluyor. Diğer testlerle aynı sınır:
+  bu ortamda çalıştırılamadı, sözdizimi gözden geçirildi.
+- Manuel test: bir rota oluşturup canlı kayıtla sürün (rotanın en az
+  yarısını kapsayacak şekilde), Keşfet → Liderlik Tablosu'nda "Farklı
+  Rota Süren" kategorisinde görünmeli. Bir POI ekleyip/rota paylaşıp
+  ilgili kategoride sayının arttığını doğrulayın. Profil'de "Rozetlerim"
+  altında ilgili rozetin (ör. "İlk Adım") kazanıldığını kontrol edin.
+
+### Teknik Borç (Haftalık Liderlik Tablosu / Rozetler ekleri)
+
+- **`is_suspicious`/`source` tamamen istemci beyanına dayanıyor** —
+  yukarıda "dürüst sınır" olarak açıklandı, kasıtlı bir kapsam sınırı.
+- ~~`routes.distance_km` NULL olabilir, %50 eşiği sessizce hiç
+  geçilemez~~ — **çözüldü**: tüm eşik karşılaştırmaları
+  `coalesce(distance_km, st_length(path)/1000)` kullanıyor, alan boşsa
+  PostGIS'ten gerçek uzunluk hesaplanıyor.
+- **`pg_cron` yok, ödül dağıtımı "ilk açan" a bağlı** — hafta bittikten
+  sonra kimse liderlik tablosunu açmazsa (çok düşük ihtimal ama teorik
+  olarak) o haftanın ödülleri asla dağıtılmaz. Sonraki bir hafta açılışı
+  önceki BİRDEN FAZLA haftayı geriye dönük telafi etmiyor (fonksiyon
+  sadece BİR ÖNCEKİ haftaya bakıyor) — istenirse bu genişletilebilir.
+- **Süreklilik rozeti her çağrıda tüm kullanıcıları tarıyor** — küçük
+  ölçekte önemsiz, kullanıcı sayısı büyürse (binlerce) bu tarama
+  `finalize_weekly_awards()`'ı yavaşlatabilir; o noktada bir arka plan
+  işine (Edge Function + zamanlanmış tetikleyici) taşınması gerekir.
+- **Rozet kataloğu sabit/kod ile yönetiliyor** — yeni bir rozet eklemek
+  için migration gerekiyor, bir admin ekranından rozet tanımlama yok
+  (bilinçli, düşük öncelik — rozetler nadiren değişecek bir katalog).
+
 ## Tasarım Kararları (Faz 1)
 
 - **Rota geometrisi:** Yazarken (insert) WKT metni (`"LINESTRING(lng lat, ...)"`)

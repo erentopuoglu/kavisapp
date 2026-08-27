@@ -79,6 +79,11 @@ export type CreateRideFromRecordingInput = {
   startedAtMs: number;
   endedAtMs: number;
   routeId?: string;
+  // Kayıt sırasında herhangi bir nokta sahte konum (mock location) olarak
+  // işaretlenmişse true — bkz. useRecordingStore.hasMockedLocation.
+  // Sürüş normal şekilde kaydedilir/gösterilir, sadece haftalık liderlik
+  // tablosuna hiç girmez (bkz. 0011_weekly_leaderboard_badges.sql).
+  isSuspicious?: boolean;
 };
 
 export async function createRideFromRecording(input: CreateRideFromRecordingInput): Promise<RecordedRide> {
@@ -106,6 +111,8 @@ export async function createRideFromRecording(input: CreateRideFromRecordingInpu
       max_speed_kmh: stats.maxSpeedKmh !== null ? Math.round(stats.maxSpeedKmh * 100) / 100 : null,
       started_at: new Date(input.startedAtMs).toISOString(),
       ended_at: new Date(input.endedAtMs).toISOString(),
+      source: "recorded",
+      is_suspicious: input.isSuspicious ?? false,
     })
     .select("*")
     .single();
@@ -160,6 +167,10 @@ export async function createRideFromGpx(input: CreateRideFromGpxInput): Promise<
       started_at: startedAtIso,
       ended_at: endedAtIso,
       gpx_storage_path: storagePath,
+      // ZORUNLU: recorded_rides.source'un DB varsayılanı 'recorded' —
+      // bunu açıkça 'gpx_import' yapmazsak bu sürüş yanlışlıkla haftalık
+      // liderlik tablosuna girer (bkz. 0011_weekly_leaderboard_badges.sql).
+      source: "gpx_import",
     })
     .select("*")
     .single();

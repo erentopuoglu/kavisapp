@@ -28,6 +28,12 @@ type RawLocation = {
     latitude: number;
     longitude: number;
     speed: number | null;
+    // Android'de expo-location'ın gerçek bir sinyali — konum bir "sahte
+    // konum" (mock location) sağlayıcısından geliyorsa true. iOS'ta
+    // güvenilir şekilde desteklenmiyor (genelde undefined). Haftalık
+    // liderlik tablosu hile koruması bunu kullanıyor — bkz.
+    // 0011_weekly_leaderboard_badges.sql ve README.
+    mocked?: boolean;
   };
   timestamp: number;
 };
@@ -41,6 +47,12 @@ type RecordingState = {
   endedAtMs: number | null;
   batterySaverMode: boolean;
   recoveredManifest: RecordingManifest | null;
+  // Kayıt sırasında herhangi bir nokta mocked:true geldiyse true olur ve
+  // sürüş bitene kadar sıfırlanmaz — sürüşün TAMAMI bu bayrakla
+  // kaydedilir (tek bir sahte nokta bile tüm sürüşü şüpheli yapar,
+  // "sadece o noktayı at" yaklaşımı sahte konum kullanımını gizlemeye
+  // yardım eder).
+  hasMockedLocation: boolean;
 
   hydrate: () => Promise<void>;
   loadRecoveredPoints: () => Promise<TrackedPoint[]>;
@@ -78,6 +90,7 @@ export const useRecordingStore = create<RecordingState>((set, get) => ({
   endedAtMs: null,
   batterySaverMode: false,
   recoveredManifest: null,
+  hasMockedLocation: false,
 
   hydrate: async () => {
     const manifest = await loadManifest();
@@ -115,6 +128,7 @@ export const useRecordingStore = create<RecordingState>((set, get) => ({
       startedAtMs: manifest.startedAtMs,
       endedAtMs: lastPoint?.timestampMs ?? manifest.startedAtMs,
       batterySaverMode: manifest.batterySaverMode,
+      hasMockedLocation: manifest.hasMockedLocation ?? false,
       recoveredManifest: null,
     });
   },
@@ -137,6 +151,7 @@ export const useRecordingStore = create<RecordingState>((set, get) => ({
       startedAtMs,
       endedAtMs: null,
       batterySaverMode,
+      hasMockedLocation: false,
     });
 
     await saveManifest({
@@ -145,17 +160,23 @@ export const useRecordingStore = create<RecordingState>((set, get) => ({
       chunkCount: 0,
       totalPoints: 0,
       batterySaverMode,
+      hasMockedLocation: false,
     });
   },
 
   ingestLocations: (locations: RawLocation[]) => {
     if (get().status !== "recording") return;
 
-    const { points, pendingBuffer, batterySaverMode, chunkCount } = get();
+    const { points, pendingBuffer, batterySaverMode, chunkCount, hasMockedLocation } = get();
     const nextPoints = [...points];
     const nextBuffer = [...pendingBuffer];
+    let mockedDetected = hasMockedLocation;
 
     for (const location of locations) {
+      if (location.coords.mocked) {
+        mockedDetected = true;
+      }
+
       const candidate: TrackedPoint = {
         latitude: location.coords.latitude,
         longitude: location.coords.longitude,
@@ -175,6 +196,10 @@ export const useRecordingStore = create<RecordingState>((set, get) => ({
         nextPoints.push(candidate);
         nextBuffer.push(candidate);
       }
+    }
+
+    if (mockedDetected !== hasMockedLocation) {
+      set({ hasMockedLocation: mockedDetected });
     }
 
     let flushedChunkCount = chunkCount;
@@ -199,6 +224,7 @@ export const useRecordingStore = create<RecordingState>((set, get) => ({
             chunkCount: flushedChunkCount,
             totalPoints: nextPoints.length,
             batterySaverMode,
+            hasMockedLocation: get().hasMockedLocation,
           })
         )
         .catch((err) => console.warn("[useRecordingStore] chunk kaydedilemedi:", err));
@@ -208,7 +234,7 @@ export const useRecordingStore = create<RecordingState>((set, get) => ({
   stop: async () => {
     await stopBackgroundTracking(LOCATION_TASK_NAME);
 
-    const { pendingBuffer, chunkCount, points, startedAtMs, batterySaverMode } = get();
+    const { pendingBuffer, chunkCount, points, startedAtMs, batterySaverMode, hasMockedLocation } = get();
     let finalChunkCount = chunkCount;
 
     if (pendingBuffer.length > 0) {
@@ -220,6 +246,7 @@ export const useRecordingStore = create<RecordingState>((set, get) => ({
         chunkCount: finalChunkCount,
         totalPoints: points.length,
         batterySaverMode,
+        hasMockedLocation,
       });
     }
 

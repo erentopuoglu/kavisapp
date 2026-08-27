@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, View } from "react-native";
 
 import { useAuthStore } from "@/features/auth/store/useAuthStore";
+import { BadgesSection } from "@/features/badges/components/BadgesSection";
 import { AppText } from "@/shared/components/AppText";
 import { Button } from "@/shared/components/Button";
 import { ScreenContainer } from "@/shared/components/ScreenContainer";
@@ -78,6 +79,8 @@ export default function ProfilScreen() {
             </View>
           )}
         </View>
+
+        {session ? <BadgesSection userId={session.user.id} /> : null}
 
         {profile?.is_admin ? (
           <Pressable style={styles.moderationRow} onPress={() => router.push("/profil/moderasyon")}>

@@ -18,4 +18,8 @@ export type RecordingManifest = {
   chunkCount: number;
   totalPoints: number;
   batterySaverMode: boolean;
+  // Uygulama çökmesi sonrası kurtarma akışında da hile korumasının
+  // kaybolmaması için manifest'e de yazılıyor — bkz. useRecordingStore'daki
+  // hasMockedLocation ve resumeRecoveredAsFinished.
+  hasMockedLocation?: boolean;
 };

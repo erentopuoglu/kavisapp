@@ -160,6 +160,11 @@ export interface Database {
           ended_at: string | null;
           is_shared: boolean;
           gpx_storage_path: string | null;
+          // Hile koruması — bkz. 0011_weekly_leaderboard_badges.sql. İkisi
+          // de INSERT'ten sonra guard trigger ile donuyor (service_role
+          // dışında kimse değiştiremez).
+          source: "recorded" | "gpx_import";
+          is_suspicious: boolean;
           created_at: string;
         };
         Insert: {
@@ -174,6 +179,8 @@ export interface Database {
           ended_at?: string | null;
           is_shared?: boolean;
           gpx_storage_path?: string | null;
+          source?: "recorded" | "gpx_import";
+          is_suspicious?: boolean;
         };
         Update: Partial<{
           is_shared: boolean;
@@ -340,6 +347,10 @@ export interface Database {
           bike_model_tag: string | null;
           tags: string[];
           best_answer_id: string | null;
+          // Haftalık liderlik tablosu bu alanı kullanıyor (updated_at
+          // güvenilir değil, her düzenlemede değişiyor) — bkz.
+          // 0011_weekly_leaderboard_badges.sql.
+          best_answer_selected_at: string | null;
           is_hidden: boolean;
           created_at: string;
           updated_at: string;
@@ -414,6 +425,32 @@ export interface Database {
         Update: Record<string, never>;
         Relationships: [];
       };
+      badges: {
+        Row: {
+          id: string;
+          key: string;
+          title: string;
+          description: string;
+          created_at: string;
+        };
+        // İstemci hiçbir zaman yazmaz — statik katalog, sadece migration.
+        Insert: Record<string, never>;
+        Update: Record<string, never>;
+        Relationships: [];
+      };
+      user_badges: {
+        Row: {
+          id: string;
+          user_id: string;
+          badge_id: string;
+          awarded_at: string;
+        };
+        // İstemci hiçbir zaman yazmaz — sadece award_badge_if_needed()
+        // (service_role, security definer) satır ekler.
+        Insert: Record<string, never>;
+        Update: Record<string, never>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -427,6 +464,26 @@ export interface Database {
       };
       increment_route_view_count: {
         Args: { p_route_id: string };
+        Returns: void;
+      };
+      get_weekly_routes_shared_leaderboard: {
+        Args: { p_week_start?: string; p_limit?: number };
+        Returns: { username: string; shared_count: number }[];
+      };
+      get_weekly_pois_leaderboard: {
+        Args: { p_week_start?: string; p_limit?: number };
+        Returns: { username: string; poi_count: number }[];
+      };
+      get_weekly_best_answers_leaderboard: {
+        Args: { p_week_start?: string; p_limit?: number };
+        Returns: { username: string; best_answer_count: number }[];
+      };
+      get_weekly_route_leaderboard: {
+        Args: { p_week_start?: string; p_limit?: number };
+        Returns: { username: string; distinct_routes: number }[];
+      };
+      finalize_weekly_awards: {
+        Args: Record<string, never>;
         Returns: void;
       };
     };
