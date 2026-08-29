@@ -3,6 +3,17 @@
 <head>
 <meta charset="utf-8">
 <style>
+  /* Marka ikonu kaynağı — "Kavis Arc" (Konsept 2B, kalın/dinamik varyasyon).
+     Uygulama ikonuyla (assets/images/icon.png) BİREBİR AYNI path/stroke
+     değerlerini kullanır; sadece köşe yarıçapı oranı (112/512 = 0.21875)
+     farklıdır çünkü web favicon'u OS tarafından maskelenmiyor, kendi
+     yuvarlatılmış köşesini taşıması gerekiyor (bkz. app ikonlarında neden
+     köşe yarıçapı YOK notu — assets/images/icon.png tam kare, iOS/Android
+     kendi maskesini uyguluyor).
+     Değiştirirsen: web/favicon.png (48), web/favicon-32.png (32) ve
+     web/apple-touch-icon.png (180) dosyalarını bu path ile yeniden render et
+     (headless Chrome screenshot, her boyutu native olarak render et — 1024'ten
+     downsample etme, küçük boyutlarda netlik kaybediyor). */
   html, body { margin: 0; padding: 0; background: transparent; }
   .tile {
     width: 512px;
@@ -13,16 +24,14 @@
     align-items: center;
     justify-content: center;
   }
-  .mark {
-    width: 224px;
-    height: 224px;
-    background: #ff7a1a;
-    border-radius: 28px;
-    transform: rotate(45deg);
-  }
 </style>
 </head>
 <body>
-  <div class="tile"><div class="mark"></div></div>
+  <div class="tile">
+    <svg width="100%" height="100%" viewBox="0 0 1024 1024">
+      <path d="M 290 750 C 250 520 300 380 480 330 C 590 300 660 320 720 260"
+            fill="none" stroke="#ff7a1a" stroke-width="195" stroke-linecap="round" />
+    </svg>
+  </div>
 </body>
 </html>

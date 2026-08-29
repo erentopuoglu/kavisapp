@@ -15,8 +15,10 @@ import { RATING_CRITERIA, overallAverage, type Route, type RouteRatingWithAuthor
 import { geoJsonLineStringToLatLngs } from "@/shared/utils/geo";
 import { useAuthStore } from "@/features/auth/store/useAuthStore";
 import { AppMapPolyline, AppMapView } from "@/lib/map";
+import { useRouteFlyover } from "@/lib/map/useRouteFlyover";
 import { AppText } from "@/shared/components/AppText";
 import { Button } from "@/shared/components/Button";
+import { FlyoverPlayButton } from "@/shared/components/FlyoverPlayButton";
 import { ScreenContainer } from "@/shared/components/ScreenContainer";
 import { StarRating } from "@/shared/components/StarRating";
 import { colors, radius, spacing } from "@/shared/theme";
@@ -37,6 +39,11 @@ export default function RotaDetayScreen() {
   const [error, setError] = useState<string | null>(null);
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [submittingRating, setSubmittingRating] = useState(false);
+
+  // route yüklenene kadar boş dizi — flyover hook'u yine de her render'da
+  // KOŞULSUZ çağrılmalı (aşağıdaki loading/error early return'lerden önce).
+  const points = route ? geoJsonLineStringToLatLngs(route.path_geojson) : [];
+  const flyover = useRouteFlyover(points);
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -121,7 +128,6 @@ export default function RotaDetayScreen() {
 
   if (!route) return null;
 
-  const points = geoJsonLineStringToLatLngs(route.path_geojson);
   const isOwnRoute = session?.user.id === route.creator_id;
 
   return (
@@ -130,9 +136,15 @@ export default function RotaDetayScreen() {
       <ScreenContainer padded={false}>
         <ScrollView showsVerticalScrollIndicator={false}>
           <View style={styles.mapWrapper}>
-            <AppMapView fitToCoordinates={points}>
+            <AppMapView fitToCoordinates={points} flyover={flyover.flyover}>
               <AppMapPolyline id="route-detail" coordinates={points} />
             </AppMapView>
+            <FlyoverPlayButton
+              isPlaying={flyover.isPlaying}
+              progress={flyover.progress}
+              disabled={!flyover.canPlay}
+              onPress={flyover.toggle}
+            />
           </View>
 
           <View style={styles.content}>

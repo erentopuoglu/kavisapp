@@ -1,9 +1,24 @@
-import { Children, isValidElement, PropsWithChildren, ReactNode, useMemo } from "react";
+import { Children, isValidElement, PropsWithChildren, ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { Pressable, StyleSheet, View, ViewStyle } from "react-native";
 
+import { computeFlyoverPlan, getFlyoverProgress, type FlyoverProgress } from "@/lib/map/flyoverPath";
+import type { CameraPosition, LatLng, MapMarkerData } from "@/lib/map/types";
 import { AppText } from "@/shared/components/AppText";
 import { colors, radius, spacing } from "@/shared/theme";
-import type { CameraPosition, LatLng, MapMarkerData } from "@/lib/map/types";
+
+// flyover: gerçek Mapbox terrain/kamera render edilmiyor, ama
+// computeFlyoverPlan/getFlyoverProgress Mapbox'a bağımlı olmayan SAF
+// fonksiyonlar (bkz. flyoverPath.ts) — burada da aynılarını kullanarak
+// GERÇEK zaman çizelgesini simüle ediyoruz. Böylece "Oynat" düğmesinin
+// state/callback akışı (onProgress/onFinish) Expo Go'da da uçtan uca
+// test edilebiliyor, sadece görsel render eksik.
+export type FlyoverControl = {
+  active: boolean;
+  coordinates: LatLng[];
+  onProgress?: (progress: FlyoverProgress) => void;
+  onFinish?: () => void;
+};
+export type { FlyoverProgress };
 
 // EXPO GO MOCK — gerçek harita çizmez.
 //
@@ -27,7 +42,10 @@ type AppMapViewProps = PropsWithChildren<{
   fitPadding?: number;
   showsUserLocation?: boolean;
   onMapPress?: (coordinate: LatLng) => void;
+  flyover?: FlyoverControl;
 }>;
+
+const FLYOVER_SIMULATION_TICK_MS = 200;
 
 type ChildCounts = { markers: number; polylines: number };
 
@@ -77,10 +95,51 @@ export function AppMapView({
   fitToCoordinates,
   showsUserLocation = false,
   onMapPress,
+  flyover,
   children,
 }: AppMapViewProps) {
   const { markers, polylines } = useMemo(() => countMapChildren(children), [children]);
   const center = formatCenter(fitToCoordinates, initialCamera);
+  const [simulatedProgress, setSimulatedProgress] = useState<FlyoverProgress | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    // simulatedProgress'i burada null'lamıyoruz — aşağıdaki JSX zaten
+    // flyover?.active değilken bu bloğu hiç render etmiyor, ve bir sonraki
+    // oynatma başladığında ilk tick birkaç yüz ms içinde günceller.
+    if (!flyover?.active) return;
+
+    const plan = computeFlyoverPlan(flyover.coordinates);
+    if (!plan) {
+      flyover.onFinish?.();
+      return;
+    }
+
+    const startedAt = Date.now();
+    timerRef.current = setInterval(() => {
+      const elapsed = Date.now() - startedAt;
+      const progress = getFlyoverProgress(plan, elapsed);
+      setSimulatedProgress(progress);
+      flyover.onProgress?.(progress);
+      if (elapsed >= plan.totalDurationMs && timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+        flyover.onFinish?.();
+      }
+    }, FLYOVER_SIMULATION_TICK_MS);
+
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [flyover?.active]);
 
   return (
     <View style={[styles.container, style]}>
@@ -96,6 +155,12 @@ export function AppMapView({
       {showsUserLocation ? (
         <AppText variant="caption" color={colors.textSecondary}>
           Kullanıcı konumu gösterimi: açık (Expo Go&apos;da simüle edilmiyor)
+        </AppText>
+      ) : null}
+      {flyover?.active ? (
+        <AppText variant="caption" color={colors.primary}>
+          3D Flyover simülasyonu (Expo Go&apos;da terrain render edilmiyor) —{" "}
+          {simulatedProgress ? `${simulatedProgress.traveledKm.toFixed(1)}/${simulatedProgress.totalKm.toFixed(1)} km` : "başlıyor…"}
         </AppText>
       ) : null}
       {onMapPress ? (

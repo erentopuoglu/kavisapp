@@ -17,6 +17,20 @@ export function haversineDistanceKm(a: LatLng, b: LatLng): number {
   return 2 * EARTH_RADIUS_KM * Math.asin(Math.sqrt(Math.min(1, h)));
 }
 
+/** a'dan b'ye, kuzeyden saat yönünde derece cinsinden yön (bearing). 3D
+ *  flyover kamerasının "nereye bakıyor" açısını hesaplamak için kullanılır
+ *  (bkz. src/lib/map/flyoverPath.ts). */
+export function bearingDegrees(a: LatLng, b: LatLng): number {
+  const lat1 = toRad(a.latitude);
+  const lat2 = toRad(b.latitude);
+  const dLng = toRad(b.longitude - a.longitude);
+
+  const y = Math.sin(dLng) * Math.cos(lat2);
+  const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
+  const deg = (Math.atan2(y, x) * 180) / Math.PI;
+  return (deg + 360) % 360;
+}
+
 export function totalDistanceKm(points: LatLng[]): number {
   let total = 0;
   for (let i = 1; i < points.length; i++) {

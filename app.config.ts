@@ -16,7 +16,12 @@ const config: ExpoConfig = {
   scheme: "kavis",
   userInterfaceStyle: "dark",
   ios: {
-    icon: "./assets/expo.icon",
+    // Expo SDK 57, ios.icon için düz bir PNG yoluna da izin veriyor (Icon
+    // Composer'ın .icon bundle formatına ek olarak) — marka ikonu basit bir
+    // düz görsel olduğu için bundle'ın grup/katman/gölge özelliklerine
+    // ihtiyaç yok; assets/expo.icon Expo'nun varsayılan placeholder'ıydı,
+    // marka ikonu eklenirken kaldırıldı.
+    icon: "./assets/images/ios-icon.png",
     bundleIdentifier: "com.kavisapp.kavis",
     supportsTablet: false,
     infoPlist: {

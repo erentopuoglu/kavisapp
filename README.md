@@ -1342,6 +1342,178 @@ teşvik etmemek için bilinçli bir tasarım kararı), keşif ve katkı
   için migration gerekiyor, bir admin ekranından rozet tanımlama yok
   (bilinçli, düşük öncelik — rozetler nadiren değişecek bir katalog).
 
+## Store Öncesi Son Düzeltmeler
+
+Store başvurusundan önce kapatılan üç madde: uygulama ikonu, engellemenin
+tüm içerik yüzeylerine yayılması, ve Gizlilik/Koşullar'daki yer tutucu
+e-posta.
+
+### 1) Uygulama İkonu
+
+- Marka ikonu ("Kavis Arc", turuncu `#ff7a1a` + antrasit `#14171c`) tüm
+  varyantlarda üretildi: `assets/images/icon.png` (1024, tam kare — OS
+  kendi maskesini uyguluyor, köşe yarıçapı GÖMÜLMEDİ), `ios-icon.png`
+  (aynı tasarım, düz PNG — bkz. aşağıdaki `.icon` bundle notu),
+  `android-icon-foreground/background/monochrome.png` (içerik Android'in
+  %66 güvenli alanına göre ölçeklendi, gerçek içerik oranı ~%55),
+  `splash-icon.png` (şeffaf, sadece işaret), `favicon.png` + web
+  `favicon.png`/`favicon-32.png`/`apple-touch-icon.png` (bunlarda köşe
+  yarıçapı GÖMÜLÜ — web'de OS maskelemesi yok, `web/assets-src/
+  favicon-source.html` ile aynı 0.21875 oranı kullanıldı).
+- **`ios.icon` artık `assets/expo.icon` (Apple'ın yeni Icon Composer
+  `.icon` bundle formatı) değil, düz `assets/images/ios-icon.png`** —
+  Expo v57 dokümantasyonu `ios.icon`'un düz bir görsel yoluna da izin
+  verdiğini doğruluyor; marka ikonu basit bir düz görsel olduğu için
+  bundle'ın grup/katman/gölge özelliklerine ihtiyaç yok. Eski
+  `assets/expo.icon` (Expo'nun varsayılan placeholder'ı) tamamen
+  kaldırıldı.
+- `app.config.ts`'teki tüm ikon referansları (icon, ios.icon,
+  android.adaptiveIcon.*, expo-splash-screen.image, web.favicon)
+  güncellendi/doğrulandı — dosya adları aynı kaldı, sadece içerik ve
+  `ios.icon` yolu değişti.
+- **Doğrulama:** `npx expo prebuild --platform android --clean` ile
+  native proje yeniden üretildi, `ic_launcher_foreground.webp` ve
+  `splashscreen_logo.png` yeni tasarımı doğru şekilde gömülü olarak
+  doğrulandı; ardından `npx expo run:android --variant release` ile
+  çalışan bir emülatöre kurulup ana ekranda gerçek görünüm teyit edildi.
+
+### 2) Engellemenin Tüm Yüzeylere Yayılması
+
+- **Bulgu:** Forum'daki engelleme (0007) aslında TEK YÖNLÜYDÜ (A, B'yi
+  engellerse B'nin içeriği A'dan gizlenir ama A'nın içeriği B'ye hâlâ
+  görünürdü) — kod yorumunda açıkça "Tek yönlü" yazıyordu. Yeni migration
+  (`0012_block_visibility_expansion.sql`) forum'u da GERÇEK karşılıklı
+  hale yükseltiyor.
+- Tek bir `is_blocked_either_way(other_user_id)` yardımcı fonksiyonu
+  (`blocks` tablosunda iki yönü de kontrol eder) şu politikalara eklendi:
+  `routes_select_visible`, `pois_select_visible`,
+  `forum_questions_select_visible`, `forum_answers_select_visible`,
+  `group_ride_messages_select`, `live_locations_select_ride_members_only`.
+- **Grup sürüşü organizatör istisnası:** Sohbet/canlı konumda, ilişkinin
+  taraflarından biri o etkinliğin organizatörüyse engelleme
+  UYGULANMIYOR. Gerekçe: canlı konumun var oluş amacı acil durumda
+  birbirini bulabilmek — alakasız bir kişisel engelleme bunu
+  kilitlememeli; organizatör güzergah/iptal gibi kritik duyuruları
+  sohbette yapıyor, bunları görememesi katılımcı için riskli. Organizatör
+  olmayan iki katılımcı arasında engelleme tam uygulanıyor. Detaylı
+  gerekçe migration dosyasının içinde.
+- **Kapsam dışı bırakılan bilinçli köşe durumu:** Bir grup sürüşünün
+  bağlı olduğu rota (`group_rides.route_id`), engellenen kişi o rotanın
+  sahibiyse teorik olarak `routes_select_visible` tarafından da
+  gizlenebilir. Bugün istemci kodu bu rotayı hiçbir yerde genişletip
+  göstermiyor (`groupRidesApi.ts` sadece `group_rides.*` çekiyor) — yani
+  ulaşılabilir değil; ileride bir rota önizlemesi eklenirse organizatör
+  istisnasının bir benzeri oraya da taşınmalı.
+- RLS smoke test dosyasına "11) ENGELLEMENİN TÜM YÜZEYLERE YAYILMASI" ve
+  "11b) GRUP SÜRÜŞÜ SOHBETİ + CANLI KONUM — ORGANİZATÖR İSTİSNASI"
+  bölümleri eklendi.
+
+### 3) Placeholder E-posta
+
+- `src/content/legal.json`'daki iki yer tutucu (`[iletişim e-postanızı
+  buraya ekleyin]`, Gizlilik md. 10 ve Koşullar md. 9) `info@kavisapp.com`
+  ile değiştirildi.
+- Doğrulama: uygulama ekranları (`gizlilik-politikasi.tsx`,
+  `kullanim-kosullari.tsx`) doğrudan bu JSON'dan render ediyor —
+  değişiklik otomatik yansır. Web tarafı `web/build.mjs` ile derlenip
+  (`node build.mjs`) `dist/gizlilik/index.html` ve `dist/kosullar/
+  index.html` çıktısında `info@kavisapp.com` göründüğü doğrulandı;
+  sitenin geri kalanı (ana sayfa footer/iletişim linki) zaten aynı
+  adresi kullanıyordu, artık tutarlı.
+
+### 4) `expo-system-ui` Geri Eklendi (Android Koyu Tema Regresyonu)
+
+Denetim düzeltmeleri sırasında "kullanılmayan bağımlılık" olarak kaldırılan
+`expo-system-ui`, meğer `app.config.ts`'teki `userInterfaceStyle: "dark"`
+ayarının **Android'de** işlemesi için gerekliymiş — bu ikon işi sırasında
+çalıştırılan `expo prebuild` "Install expo-system-ui in your project to
+enable this feature" uyarısı verince fark edildi. Paket geri eklendi
+(`npx expo install expo-system-ui`, SDK 57 uyumlu sürüm otomatik seçildi).
+iOS tarafında bu ayar zaten native `UIUserInterfaceStyle` üzerinden
+çalıştığı için etkilenmemiş olması bekleniyor, ama iOS prebuild bu
+oturumda çalıştırılmadı — bir sonraki iOS build'inde doğrulanmalı.
+
+### Kurulum ve Test
+
+- Yeni migration: `supabase db push` (`0012_block_visibility_expansion.sql`).
+- `assets/expo.icon` kaldırıldığı ve `expo-system-ui` geri eklendiği için
+  native projede eski referans kalmasın diye `npx expo prebuild --clean`
+  önerilir (bu oturumda Android için yapıldı; iOS tarafı için de aynısı
+  çalıştırılmalı).
+
+## 3D Sinematik Rota Gösterimi (Flyover) — Aşama 1
+
+Sürüş özeti ve rota detay ekranlarına, rotayı Mapbox'ın 3D terrain'i
+üzerinde "uçarak" gösteren, "Oynat" ile tetiklenen bir kamera animasyonu
+eklendi (Strava Fly-by benzeri; Aşama 1 sadece ekran içi gösterim, video
+kaydı/paylaşım Aşama 2).
+
+- **Yeni dosyalar:** `src/lib/map/flyoverPath.ts` (Mapbox'a hiç bağımlı
+  olmayan SAF kamera-yolu matematiği — rota koordinatlarından bir dizi
+  kamera durağı üretir: genel görünüm → yola iniş → rota boyunca uçuş),
+  `src/lib/map/useRouteFlyover.ts` (ekranların paylaştığı oynatma
+  state'i), `src/shared/components/FlyoverPlayButton.tsx` (Oynat/Durdur +
+  ilerleme çubuğu, harita bağımsız saf UI).
+- `MapService.tsx`'e `AppMapView`'in yeni `flyover` prop'u eklendi —
+  aktifken `RasterDemSource`+`Terrain`+`SkyLayer`'ı SADECE o süre boyunca
+  mount ediyor (performans notuna bkz.), kamerayı `Camera.setCamera({type:
+  'CameraStops', ...})` ile TEK SEFERDE (native tarafta zincirlenerek,
+  JS'den kare kare güncelleme YOK) sürüyor. `MapService.expo-go.tsx`
+  aynı `flyoverPath.ts` fonksiyonlarını kullanarak gerçek render olmadan
+  aynı zaman çizelgesini simüle ediyor.
+- **Kamera hissi:** Pitch 65°/zoom 16.5, motosiklet/yol seviyesi bir
+  takip açısı hedefliyor. Ardışık duraklar arası bearing (yön) hem
+  "unwrap" ediliyor (350°→10° gibi bir geçişte kameranın YANLIŞ yönden
+  uzun yoldan dönmesini engellemek için) hem de ±2 örneklik hareketli
+  ortalamayla yumuşatılıyor — virajlarda ani sıçrama yok. Rota, genel
+  görünümden (rotanın tamamını kapsayan geniş/yüksek açılı kadraj) yola
+  "inerek" başlıyor, daha sinematik.
+- **İlerleme göstergesi:** Oynatma sırasında ince bir çubuk + "X/Y km"
+  metni gösteriliyor (genel görünüm bölümü ilerlemeye dahil değil, sadece
+  yol seviyesi uçuş sayılıyor) — kullanıcı hem ne kadar kaldığını görüyor
+  hem animasyonun donmadığını anlıyor.
+- **Süre/örnekleme:** Toplam uçuş süresi mesafeyle orantılı, 8-25 saniye
+  arasında sınırlı (+ sabit ~2.2sn genel görünüm + ~1.6sn iniş geçişi).
+  Örnekleme adımı (kaç durak üretileceği) rotanın toplam uzunluğuna göre
+  BÜYÜYOR (~150 durak hedefi) — sabit bir adım (ör. her zaman 50m)
+  kullanılsaydı çok uzun bir rotada yüzlerce durak oluşur, her durağın
+  taban süresi × durak sayısı toplam süreyi 25 saniye sınırının çok
+  üzerine taşırdı (bu, kodlama sırasında yakalanıp düzeltilen gerçek bir
+  hataydı — bkz. `flyoverPath.ts` içindeki adaptif adım yorumu).
+- **Mapbox terrain-DEM maliyeti:** Mapbox'ın kendi tileset referansı,
+  `mapbox-terrain-dem-v1`'in "yalnızca Maps SDK içinden" erişilebildiğini
+  ve "Raster Tiles API üzerinden mevcut olmadığını" açıkça belirtiyor —
+  yani ayrı ücretlendirilen bir REST uç noktası değil, zaten sayılan bir
+  SDK harita oturumunun parçası (ek bir fatura kalemi eklemiyor, sadece
+  bant genişliği artıyor). Bu, iki ayrı Mapbox sayfasından çıkarılan bir
+  sonuç — tek bir cümleyle doğrulanamadı, canlıya alındıktan sonra
+  kullanım panelinden ampirik doğrulama önerilir.
+
+### Teknik Borç (Flyover Aşama 1 ekleri)
+
+- **Orta/düşük segment Android'de flyover performansı DOĞRULANMADI** —
+  bu oturumda gerçek cihazda/emülatörde test edilemedi (ortam kısıtı).
+  Terrain + hareketli kamera (pozisyon+bearing+pitch aynı anda) ilk
+  bakışta düz 2D haritadan daha ağır bir render yükü; gerçek cihaz
+  testinde ÖNCELİKLİ olarak kontrol edilmeli. Riski azaltan tasarım
+  kararı: terrain/gökyüzü katmanları SADECE "Oynat" aktifken mount
+  ediliyor, normal harita gezinmesini hiç etkilemiyor — ama oynatma
+  ANI'nın kendisi düşük uçlu cihazlarda kasabilir.
+- **Cihaz sınıfı otomatik tespiti yok** — bilinçli, dar kapsam (Faz 1'de
+  eklenmedi; `expo-device` denetimde kaldırılmıştı). Gerçek kullanıcı
+  raporu gelirse manuel bir "Basit mod" (terrain'siz) anahtarı ucuz bir
+  takip işi olur.
+- **Animasyon bitişi için native bir "tamamlandı" callback'i yok** —
+  `Mapbox.Camera.setCamera` bunu desteklemiyor; toplam süre JS tarafında
+  hesaplanıp bir `setInterval` ile takip ediliyor (200ms çözünürlük).
+  Native taraf beklenenden az/çok sürerse (örn. cihaz kasarsa) ilerleme
+  göstergesi gerçek kamera konumuyla hafifçe senkronsuz kalabilir.
+- **Aşama 2 (video kaydı/paylaşım) için hazırlanan TEK şey**
+  `flyoverPath.ts`'in Mapbox'tan bağımsız saf çıktısı — kare kare bir
+  snapshot render'ı veya ekran kaydı yaklaşımı seçilirse aynı hesaplanan
+  yolu tüketebilir. Kayıt/export altyapısının kendisi (native video
+  encoding, izin akışı, paylaşım) bilinçli olarak bu aşamada kurulmadı.
+
 ## Tasarım Kararları (Faz 1)
 
 - **Rota geometrisi:** Yazarken (insert) WKT metni (`"LINESTRING(lng lat, ...)"`)

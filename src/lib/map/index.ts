@@ -26,6 +26,11 @@ export const AppMapMarker = impl.AppMapMarker;
 export const AppMapPolyline = impl.AppMapPolyline;
 export type { LatLng, CameraPosition, MapMarkerData } from "./types";
 
+// Flyover: FlyoverControl/FlyoverProgress iki implementasyonda da (gerçek +
+// Expo Go mock) birebir aynı tanımlanıyor (bkz. her iki dosyanın başındaki
+// not) — hangisinden export edildiği davranışı etkilemez, sadece tip.
+export type { FlyoverControl, FlyoverProgress } from "./MapService";
+
 // Directions/Geocoding @rnmapbox/maps native modülüne değil düz HTTP'ye
 // dayanır — Expo Go'da da sorunsuz çalışır, bu yüzden ayrı bir mock
 // gerekmez ve doğrudan (koşulsuz) export edilebilir.

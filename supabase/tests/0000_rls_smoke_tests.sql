@@ -627,6 +627,183 @@ begin
   raise notice 'PASS: haftalık liderlik tablosu / rozet RLS testleri geçti (recorded_rides sızmıyor, user_badges/weekly_awards yazılamıyor).';
 end $$;
 
+-- ---------------------------------------------------------------------
+-- 11) ENGELLEMENİN TÜM YÜZEYLERE YAYILMASI (0012_block_visibility_expansion.sql)
+-- ---------------------------------------------------------------------
+-- Forum'un artık gerçekten KARŞILIKLI olduğunu, routes/pois'in de aynı
+-- kurala uyduğunu, ve grup sürüşü sohbeti/canlı konumunda organizatör
+-- istisnasının doğru çalıştığını doğrular.
+do $$
+declare
+  user_a_id uuid := '00000000-0000-0000-0000-0000000000aa';
+  user_b_id uuid := '00000000-0000-0000-0000-0000000000bb';
+  new_route_id uuid;
+  new_poi_id uuid;
+  new_question_id uuid;
+  visible_count int;
+begin
+  -- A, B'yi engeller.
+  perform pg_temp.act_as(user_a_id);
+  insert into blocks (blocker_id, blocked_id) values (user_a_id, user_b_id);
+
+  ------------------------------------------------------------------
+  -- ROUTES — karşılıklı: B'nin rotası A'dan, A'nın rotası B'den gizli.
+  ------------------------------------------------------------------
+  perform pg_temp.act_as(user_b_id);
+  insert into routes (creator_id, title, path)
+  values (user_b_id, 'Engelli Kullanıcı Rotası', st_geogfromtext('LINESTRING(29.2 41.2, 29.3 41.3)'))
+  returning id into new_route_id;
+
+  perform pg_temp.act_as(user_a_id);
+  select count(*) into visible_count from routes where id = new_route_id;
+  if visible_count <> 0 then
+    raise exception 'FAIL(routes): A, engellediği B''nin rotasını hâlâ görebiliyor!';
+  end if;
+
+  insert into routes (creator_id, title, path)
+  values (user_a_id, 'Engelleyen Kullanıcı Rotası', st_geogfromtext('LINESTRING(29.4 41.4, 29.5 41.5)'))
+  returning id into new_route_id;
+
+  perform pg_temp.act_as(user_b_id);
+  select count(*) into visible_count from routes where id = new_route_id;
+  if visible_count <> 0 then
+    raise exception 'FAIL(routes): B, kendisini engelleyen A''nın rotasını hâlâ görebiliyor (mutual değil)!';
+  end if;
+
+  ------------------------------------------------------------------
+  -- POIS — aynı desen.
+  ------------------------------------------------------------------
+  perform pg_temp.act_as(user_b_id);
+  insert into pois (creator_id, type, location, title)
+  values (user_b_id, 'gas_station', st_geogfromtext('POINT(29.2 41.2)'), 'Engelli Kullanıcı POI')
+  returning id into new_poi_id;
+
+  perform pg_temp.act_as(user_a_id);
+  select count(*) into visible_count from pois where id = new_poi_id;
+  if visible_count <> 0 then
+    raise exception 'FAIL(pois): A, engellediği B''nin POI''sini hâlâ görebiliyor!';
+  end if;
+
+  ------------------------------------------------------------------
+  -- FORUM — artık mutual: B'nin sorusu A'dan, A'nın sorusu B'den gizli.
+  -- (0007'deki eski davranış tek yönlüydü; bu ikinci kontrol regresyonu
+  -- yakalar.)
+  ------------------------------------------------------------------
+  perform pg_temp.act_as(user_b_id);
+  insert into forum_questions (user_id, title, body)
+  values (user_b_id, 'Engelli kullanıcı sorusu', 'gövde')
+  returning id into new_question_id;
+
+  perform pg_temp.act_as(user_a_id);
+  select count(*) into visible_count from forum_questions where id = new_question_id;
+  if visible_count <> 0 then
+    raise exception 'FAIL(forum_questions): A, engellediği B''nin sorusunu hâlâ görebiliyor!';
+  end if;
+
+  insert into forum_questions (user_id, title, body)
+  values (user_a_id, 'Engelleyen kullanıcı sorusu', 'gövde')
+  returning id into new_question_id;
+
+  perform pg_temp.act_as(user_b_id);
+  select count(*) into visible_count from forum_questions where id = new_question_id;
+  if visible_count <> 0 then
+    raise exception 'FAIL(forum_questions): B, kendisini engelleyen A''nın sorusunu hâlâ görebiliyor (mutual değil)!';
+  end if;
+
+  raise notice 'PASS: routes/pois/forum engelleme karşılıklı çalışıyor.';
+end $$;
+
+-- ---------------------------------------------------------------------
+-- 11b) GRUP SÜRÜŞÜ SOHBETİ + CANLI KONUM — ORGANİZATÖR İSTİSNASI
+-- ---------------------------------------------------------------------
+-- C organizatör; A ve B onaylı katılımcı. A, B'yi engeller (aralarında
+-- normal karşılıklı engelleme geçerli olmalı). Ayrıca A, organizatör C'yi
+-- de engeller — ama bu ilişkide C organizatör olduğu için engelleme bu
+-- etkinlik bağlamında uygulanmamalı (bkz. 0012 migration'daki gerekçe).
+do $$
+declare
+  user_a_id uuid := '00000000-0000-0000-0000-0000000000aa';
+  user_b_id uuid := '00000000-0000-0000-0000-0000000000bb';
+  user_c_id uuid := '00000000-0000-0000-0000-0000000000cc';
+  v_ride_id uuid;
+  visible_count int;
+begin
+  perform pg_temp.act_as(user_c_id);
+  insert into group_rides (creator_id, title, scheduled_at, status)
+  values (user_c_id, 'Test Sürüşü — Engelleme/Organizatör İstisnası', now() - interval '1 hour', 'active')
+  returning id into v_ride_id;
+
+  insert into group_ride_participants (ride_id, user_id) values (v_ride_id, user_a_id);
+  insert into group_ride_participants (ride_id, user_id) values (v_ride_id, user_b_id);
+  update group_ride_participants set status = 'approved', responded_at = now()
+    where ride_id = v_ride_id and user_id in (user_a_id, user_b_id);
+
+  -- C (organizatör) konum paylaşır ve mesaj yazar.
+  insert into live_locations (ride_id, user_id, location)
+  values (v_ride_id, user_c_id, st_geogfromtext('POINT(29.0 41.0)'));
+  insert into group_ride_messages (ride_id, user_id, message) values (v_ride_id, user_c_id, 'Organizatörden duyuru');
+
+  -- B (normal katılımcı) da konum paylaşır ve mesaj yazar.
+  perform pg_temp.act_as(user_b_id);
+  insert into live_locations (ride_id, user_id, location)
+  values (v_ride_id, user_b_id, st_geogfromtext('POINT(29.01 41.01)'));
+  insert into group_ride_messages (ride_id, user_id, message) values (v_ride_id, user_b_id, 'B''den mesaj');
+
+  -- A, B'yi VE organizatör C'yi engeller.
+  perform pg_temp.act_as(user_a_id);
+  insert into blocks (blocker_id, blocked_id) values (user_a_id, user_b_id);
+  insert into blocks (blocker_id, blocked_id) values (user_a_id, user_c_id);
+
+  -- A artık B'nin mesajını/konumunu GÖRMEMELİ (organizatör değil, tam engelleme).
+  select count(*) into visible_count from group_ride_messages
+    where ride_id = v_ride_id and user_id = user_b_id;
+  if visible_count <> 0 then
+    raise exception 'FAIL(group_ride_messages): A, engellediği normal katılımcı B''nin mesajını hâlâ görüyor!';
+  end if;
+
+  select count(*) into visible_count from live_locations
+    where ride_id = v_ride_id and user_id = user_b_id;
+  if visible_count <> 0 then
+    raise exception 'FAIL(live_locations): A, engellediği normal katılımcı B''nin konumunu hâlâ görüyor!';
+  end if;
+
+  -- Ama A, engellediği organizatör C'nin mesajını/konumunu GÖRMEYE DEVAM
+  -- ETMELİ (organizatör istisnası — güvenlik/işlevsellik gerekçesi).
+  select count(*) into visible_count from group_ride_messages
+    where ride_id = v_ride_id and user_id = user_c_id;
+  if visible_count <> 1 then
+    raise exception 'FAIL(group_ride_messages): A, engellediği organizatör C''nin duyurusunu göremiyor (istisna çalışmıyor)!';
+  end if;
+
+  select count(*) into visible_count from live_locations
+    where ride_id = v_ride_id and user_id = user_c_id;
+  if visible_count <> 1 then
+    raise exception 'FAIL(live_locations): A, engellediği organizatör C''nin konumunu göremiyor (istisna çalışmıyor)!';
+  end if;
+
+  -- Simetrik yön: organizatör C, kendisini engellemiş olan A'nın mesajını/
+  -- konumunu da görebilmeli (etkinliği yönetebilmek için tam görüş alanı).
+  perform pg_temp.act_as(user_a_id);
+  insert into live_locations (ride_id, user_id, location)
+  values (v_ride_id, user_a_id, st_geogfromtext('POINT(29.02 41.02)'));
+  insert into group_ride_messages (ride_id, user_id, message) values (v_ride_id, user_a_id, 'A''dan mesaj');
+
+  perform pg_temp.act_as(user_c_id);
+  select count(*) into visible_count from group_ride_messages
+    where ride_id = v_ride_id and user_id = user_a_id;
+  if visible_count <> 1 then
+    raise exception 'FAIL(group_ride_messages): organizatör C, kendisini engellemiş A''nın mesajını göremiyor (istisna çalışmıyor)!';
+  end if;
+
+  select count(*) into visible_count from live_locations
+    where ride_id = v_ride_id and user_id = user_a_id;
+  if visible_count <> 1 then
+    raise exception 'FAIL(live_locations): organizatör C, kendisini engellemiş A''nın konumunu göremiyor (istisna çalışmıyor)!';
+  end if;
+
+  raise notice 'PASS: grup sürüşü sohbeti/canlı konumda engelleme + organizatör istisnası doğru çalışıyor.';
+end $$;
+
 raise notice '=== TÜM RLS SMOKE TESTLERİ BAŞARIYLA GEÇTİ ===';
 
 rollback; -- Test verilerini kalıcı bırakmamak için değişiklikleri geri al.

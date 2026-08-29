@@ -10,8 +10,10 @@ import { writeAndShareGpx } from "@/features/recording/utils/gpxFile";
 import { fetchRoutes } from "@/features/routes/api/routesApi";
 import type { Route } from "@/features/routes/types";
 import { AppMapPolyline, AppMapView } from "@/lib/map";
+import { useRouteFlyover } from "@/lib/map/useRouteFlyover";
 import { AppText } from "@/shared/components/AppText";
 import { Button } from "@/shared/components/Button";
+import { FlyoverPlayButton } from "@/shared/components/FlyoverPlayButton";
 import { ScreenContainer } from "@/shared/components/ScreenContainer";
 import { TextField } from "@/shared/components/TextField";
 import { colors, radius, spacing } from "@/shared/theme";
@@ -41,6 +43,7 @@ export default function SurusOzetScreen() {
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [discarding, setDiscarding] = useState(false);
+  const flyover = useRouteFlyover(points);
 
   if (points.length < 2 || !startedAtMs) {
     return (
@@ -115,9 +118,15 @@ export default function SurusOzetScreen() {
       <ScreenContainer padded={false}>
         <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
           <View style={styles.mapWrapper}>
-            <AppMapView fitToCoordinates={points}>
+            <AppMapView fitToCoordinates={points} flyover={flyover.flyover}>
               <AppMapPolyline id="ride-summary" coordinates={points} />
             </AppMapView>
+            <FlyoverPlayButton
+              isPlaying={flyover.isPlaying}
+              progress={flyover.progress}
+              disabled={!flyover.canPlay}
+              onPress={flyover.toggle}
+            />
           </View>
 
           <View style={styles.content}>
