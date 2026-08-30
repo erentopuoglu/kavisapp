@@ -1,0 +1,473 @@
+{
+  "_bilgi": {
+    "aciklama": "Kavis uygulamasına aktarılacak başlangıç rota seti. Koordinat İÇERMEZ — her rota başlangıç/bitiş/ara nokta YER ADI ile tanımlıdır. Uygulamanın 'Yol Takipli' modu (Mapbox Directions + Geocoding) bu yer adlarından gerçek yol geometrisini, mesafeyi ve süreyi kendisi üretmelidir. Bu şekilde uydurma koordinat/mesafe riski ortadan kalkar.",
+    "kaynak_turleri": {
+      "kullanici": "Uygulama sahibinin bizzat sürdüğü, kendi deneyimine dayanan rotalar. İbare GEREKMEZ.",
+      "derleme": "Motosiklet forumları, sürücü yorumları ve açık kaynaklardan derlenmiş; henüz bizzat sürülmemiş. İbare ZORUNLU."
+    },
+    "ibare": "Topluluk kaynaklarından derlendi. Sürdüysen deneyimini paylaş, birlikte güncelleyelim.",
+    "uyari": "Yol durumları değişkendir (şantiye, heyelan, kar, asfalt yenileme). Derleme rotalar yayına alınmadan önce güncel yol durumu teyit edilmeli; kritik uyarılar 'uyarilar' alanında tutulmuştur."
+  },
+
+  "rotalar": [
+    {
+      "id": "mersin-ayvagedigi",
+      "baslik": "Mersin – Ayvagediği",
+      "bolge": "Mersin",
+      "baslangic": "Mersin",
+      "bitis": "Ayvagediği, Mersin",
+      "ara_noktalar": [],
+      "kaynak": "kullanici",
+      "aciklama": "Şehrin baskısından kaçmak için en kısa yol. Virajlar hemen başlıyor, kısa sürede rakım kazanıyorsun; boğucu sahil havası yerini temiz yayla havasına bırakıyor. Asfalt yer yer bozuk ama büyük kısmı iyi durumda. Virajlar karışık — bazıları geniş ve akıcı, bazıları sıkı, o yüzden tempoyu yola göre ayarlamak gerekiyor. Sabah çıkmak en mantıklısı: hem hava serin hem yol boş. Yol üzerinde mola verilebilecek noktalar mevcut. Uzun bir tur değil, sabah çıkıp öğlene dönebilirsin.",
+      "en_iyi_zaman": "Sabah saatleri; yaz aylarında serinlik için ideal",
+      "uyarilar": ["Hafta sonları ve yaz aylarında yaylacı trafiği belirgin artıyor"],
+      "zorluk": "Kolay-Orta"
+    },
+    {
+      "id": "mersin-alanya",
+      "baslik": "Mersin – Alanya (Sahil Yolu)",
+      "bolge": "Mersin / Antalya",
+      "baslangic": "Mersin",
+      "bitis": "Alanya, Antalya",
+      "ara_noktalar": ["Silifke", "Anamur", "Gazipaşa"],
+      "kaynak": "kullanici",
+      "aciklama": "Sahil ve dağın iç içe geçtiği, uzun soluklu bir tur. Virajlar deniz manzarasıyla birlikte geliyor — ama yolun büyük kısmı artık tünelli, eskisi kadar viraj kalmadı. Asfalt yer yer kötüleşiyor, dikkatli sürmek gerekiyor. Yol üzerinde mola noktaları mevcut. Tek günde gidilir ama dönüş yorucu olur; tek yön 4-5 saat sürüyor. Konaklamalı planlamak daha keyifli.",
+      "en_iyi_zaman": "İlkbahar ve yaz, sabah saatleri",
+      "uyarilar": ["Sabah 10'dan sonra tır yoğunluğu belirgin artıyor, erken çıkmak şart"],
+      "zorluk": "Orta"
+    },
+    {
+      "id": "mersin-kizkalesi",
+      "baslik": "Mersin – Kızkalesi",
+      "bolge": "Mersin",
+      "baslangic": "Mersin",
+      "bitis": "Kızkalesi, Erdemli, Mersin",
+      "ara_noktalar": [],
+      "kaynak": "kullanici",
+      "aciklama": "Kısa ve keyifli bir kaçamak. Yol düz, asfalt güzel — tempo yapmak yerine manzaranın tadını çıkarmak için ideal. Sahil boyunca gidiyorsun, deniz hep yanında. Sabah erken çıkarsan hem yol boş oluyor hem de vardığında denize girecek vaktin oluyor. Yol üzerinde mola ve kahvaltı noktaları bol. Yeni başlayanlar için de rahat bir rota.",
+      "en_iyi_zaman": "Sabah erken; yazın deniz için ideal",
+      "uyarilar": ["Yaz aylarında ve hafta sonlarında trafik yoğunlaşıyor"],
+      "zorluk": "Kolay"
+    },
+
+    {
+      "id": "silifke-uzuncaburc",
+      "baslik": "Silifke – Uzuncaburç",
+      "bolge": "Mersin",
+      "baslangic": "Silifke, Mersin",
+      "bitis": "Uzuncaburç, Silifke",
+      "ara_noktalar": ["Demircili, Silifke"],
+      "kaynak": "derleme",
+      "aciklama": "Silifke'den kuzeye, Toroslar'a tırmanan bir dağ rotası. Mesafe kağıt üzerinde kısa görünse de viraj yoğun olduğu için sürüş yaklaşık 40-45 dakika alıyor; acele etmeye gelmeyen bir yol. Asfalt genel olarak sorunsuz ama yol dar ve virajlı, son bölümü belirgin şekilde dikleşiyor. Yükseldikçe hava serinliyor; 1200 metre rakımda sahilin sıcağından tamamen kopuyorsun. Yolun sonunda antik Olba Krallığı'nın merkezi Uzuncaburç Antik Kenti var — Zeus Tapınağı, anıtsal kapılar ve kuleler ayakta. Yol boyunca Demircili'de Roma dönemi anıt mezarları, İmamlı yakınlarında kale kalıntıları geçiyorsun. Rota bir varış noktası değil, boydan boya tarih.",
+      "en_iyi_zaman": "İlkbahar ve sonbahar; yazın serinliği için de tercih edilir",
+      "uyarilar": [
+        "Kış aylarında yol zaman zaman kapanabiliyor, kar görülebiliyor",
+        "Güzergahta yol çalışması bilgileri var — çıkmadan önce güncel durumu teyit et"
+      ],
+      "zorluk": "Orta"
+    },
+    {
+      "id": "silifke-mut",
+      "baslik": "Silifke – Mut (Göksu Vadisi)",
+      "bolge": "Mersin",
+      "baslangic": "Silifke, Mersin",
+      "bitis": "Mut, Mersin",
+      "ara_noktalar": [],
+      "kaynak": "derleme",
+      "aciklama": "Sahilden kopup Toroslar'a tırmanan karakterli bir vadi rotası. Silifke'den kuzeye, Sertavul yönüne saptığın anda yol tamamen değişiyor: dik kanyon yamaçları, tırmanışlar ve viraj üstüne viraj. Göksu Nehri yol boyunca sana eşlik ediyor, yol nehrin çevresinde dağların yamaçları boyunca ilerliyor. Tabelada yazan mesafeye aldanma — virajlar yüzünden süre neredeyse iki katına çıkabiliyor. Sürücü yorumlarında yol, manzarası ve tatlı virajlarıyla keyif verici olarak anlatılıyor. Duble yol çalışmalarıyla asfalt kalitesi yükselmiş durumda.",
+      "en_iyi_zaman": "İlkbahar ve sonbahar",
+      "uyarilar": [
+        "Vadiden gelen sert yan rüzgarlar motosiklette dikkat istiyor",
+        "Hatta süren yol yapım çalışmaları var (tünel, viyadük, heyelan ıslahı) — şantiye trafiği çıkabilir"
+      ],
+      "yol_uzeri": ["Göksu kenarındaki nehir tesisleri (mola)", "Alahan Manastırı (Mut'tan ~20 km sonra, 2,5 km virajlı sapak)", "Yerköprü Şelalesi"],
+      "zorluk": "Orta"
+    },
+    {
+      "id": "anamur-ermenek",
+      "baslik": "Anamur – Ermenek",
+      "bolge": "Mersin / Karaman",
+      "baslangic": "Anamur, Mersin",
+      "bitis": "Ermenek, Karaman",
+      "ara_noktalar": ["Kazancı, Ermenek"],
+      "kaynak": "derleme",
+      "aciklama": "Toroslar'ın en iddialı viraj hatlarından biri. Yaklaşık 80 kilometre içinde deniz seviyesinden 2000 metreye yakın rakıma çıkan, aynı mesafede yüzlerce keskin viraj barındıran bir yol. Sürücü yorumlarında Türkiye'nin en virajlı ve rampalı yolları arasında sayılıyor — ve bu bir şikayet değil, övgü olarak söyleniyor. Motosiklet forumlarında Kazancı sonrası ardı ardına gelen virajların keyifli olduğu, Toroslar'ın yol kalitesi ve viraj sürekliliği bakımından Karadeniz'e güçlü bir alternatif olduğu belirtiliyor. Manzara yükseklikle sürekli değişiyor.",
+      "en_iyi_zaman": "Sonbahar özellikle güzel; yazın sahilden kaçış olarak da tercih edilir",
+      "uyarilar": [
+        "YAKIT: Ermenek çıkışından sonra Gülnar'a kadar istasyon yok — depoyu Ermenek'te doldur",
+        "Konya il sınırına geçişte asfalt kalitesi belirgin düşüyor"
+      ],
+      "yol_uzeri": ["Kazancı kasabası (yol üstü kahveler, çay molası)"],
+      "zorluk": "İleri"
+    },
+    {
+      "id": "mut-sertavul-karaman",
+      "baslik": "Mut – Sertavul Geçidi – Karaman",
+      "bolge": "Mersin / Karaman",
+      "baslangic": "Mut, Mersin",
+      "bitis": "Karaman",
+      "ara_noktalar": ["Sertavul Geçidi"],
+      "kaynak": "derleme",
+      "aciklama": "Akdeniz'den İç Anadolu'ya, Toroslar'ı aşarak geçen ikonik bir dağ rotası. Yaklaşık 200 kilometre ve giderek yükselen rakımıyla bir motosiklet sitesinin 'Türkiye'nin en iyi rotaları' listesinde yer alıyor. Yol asfalt ama oldukça virajlı; özellikle Mut sonrası başlayan tırmanış hem motoru hem sürücüyü sınıyor. Virajlar net ve keskin, zaman zaman gölgeli ve nemli kesitler çıkıyor. Rotanın kalbi 1650 rakımlı Sertavul Geçidi: İç Anadolu'yu Akdeniz'e bağlayan tarihi geçit. Güzergah Toroslar manzarası eşliğinde Göksu Nehri'nin kâh kenarından kâh üzerinden geçiyor.",
+      "en_iyi_zaman": "Haziran–Eylül ideal; sabah erken çıkış rüzgar/sis ve trafik açısından avantajlı",
+      "uyarilar": [
+        "KIŞ: Geçit kar, tipi ve sis nedeniyle ulaşıma tamamen kapanabiliyor. Zincirsiz geçişe izin verilmeyen dönemler oluyor — kışın çıkmadan önce yol durumunu mutlaka teyit et",
+        "Yeni tünelli-viyadüklü hat çalışmaları sürüyor, şantiye trafiği olabilir"
+      ],
+      "yol_uzeri": ["Sertavul sonrası et lokantaları bölgesi", "Alahan Manastırı"],
+      "zorluk": "Orta-İleri"
+    },
+    {
+      "id": "gazipasa-tasucu",
+      "baslik": "Gazipaşa – Taşucu",
+      "bolge": "Antalya / Mersin",
+      "baslangic": "Gazipaşa, Antalya",
+      "bitis": "Taşucu, Silifke",
+      "ara_noktalar": ["Anamur", "Aydıncık"],
+      "kaynak": "derleme",
+      "aciklama": "Sahil hattının en karakterli bölümü. Bir motosiklet forumunda Antalya–Gazipaşa arası sıkıcı bulunurken, Gazipaşa'dan Taşucu'na kadar olan kısım bol virajlı ve keyifli olarak anlatılıyor. Uçurumlu, manzaralı, sürekli viraj içeren bir güzergah. Aydıncık gibi küçük sahil yerleşimlerinde mola verilebiliyor.",
+      "en_iyi_zaman": "İlkbahar ve sonbahar; yaz sıcağında sabah saatleri",
+      "uyarilar": [
+        "Virajlarda kamyon ve otobüsler karşı şeridi işgal edebiliyor — kör virajlarda azami dikkat",
+        "Yol boyunca radar noktaları mevcut"
+      ],
+      "zorluk": "Orta-İleri"
+    },
+
+    {
+      "id": "kas-kalkan",
+      "baslik": "Kaş – Kalkan",
+      "bolge": "Antalya",
+      "baslangic": "Kaş, Antalya",
+      "bitis": "Kalkan, Kaş",
+      "ara_noktalar": [],
+      "kaynak": "derleme",
+      "aciklama": "Antalya'nın viraj klasiği. Motosiklet forumlarında bölgenin en kaliteli virajları olarak anılıyor: yaklaşık 20-25 kilometre boyunca neredeyse kesintisiz viraj alarak ilerliyorsun ve asfalt kalitesi ülke ortalamasının belirgin üstünde. Deniz manzarası yol boyunca eşlik ediyor. Kısa ama yoğun bir rota — tekrar tekrar sürülen türden.",
+      "en_iyi_zaman": "İlkbahar ve sonbahar; yaz aylarında turist trafiği artıyor",
+      "uyarilar": ["Yaz sezonunda turist ve kiralık araç trafiği yoğunlaşıyor"],
+      "zorluk": "Orta"
+    },
+    {
+      "id": "finike-demre",
+      "baslik": "Finike – Demre",
+      "bolge": "Antalya",
+      "baslangic": "Finike, Antalya",
+      "bitis": "Demre, Antalya",
+      "ara_noktalar": [],
+      "kaynak": "derleme",
+      "aciklama": "Motosiklet forumunda 'virajların kralı' olarak anılan bölüm. Kaş–Kalkan hattına göre asfalt kalitesi biraz daha düşük olsa da viraj yapısı ve manzarası güçlü. Deniz kenarında, sürekli dönen bir hat.",
+      "en_iyi_zaman": "İlkbahar ve sonbahar",
+      "uyarilar": ["Forumda özellikle uyarılıyor: manzaraya kapılıp odağı kaybetme riski yüksek", "Asfalt kalitesi yer yer düşüyor"],
+      "zorluk": "Orta-İleri"
+    },
+    {
+      "id": "antalya-kas",
+      "baslik": "Antalya – Kaş (Klasik Sahil Hattı)",
+      "bolge": "Antalya",
+      "baslangic": "Antalya",
+      "bitis": "Kaş, Antalya",
+      "ara_noktalar": ["Kemer", "Kumluca", "Finike", "Demre"],
+      "kaynak": "derleme",
+      "aciklama": "Bölgenin en bilinen rotası. Dağ manzarasıyla başlayıp Kumluca sonrası sahile inen, Demre virajlarıyla Kaş'a ulaşan güzergah. Deniz manzarası, antik kentler ve viraj bir arada. Günübirlik yapılabilir ama duraklarla birlikte tam gün ayırmak daha keyifli.",
+      "en_iyi_zaman": "İlkbahar ve sonbahar",
+      "uyarilar": ["Yaz sezonunda sahil kesiminde trafik yoğun"],
+      "zorluk": "Orta"
+    },
+    {
+      "id": "antalya-kumluca-ic-hat",
+      "baslik": "Antalya – Kumluca (İç Hat)",
+      "bolge": "Antalya",
+      "baslangic": "Antalya",
+      "bitis": "Kumluca, Antalya",
+      "ara_noktalar": ["Hisarçandır", "Üçoluk", "Altınyaka"],
+      "kaynak": "derleme",
+      "aciklama": "Sahil yolunun kalabalığından kaçmak isteyenler için forumda önerilen iç güzergah. Kumluca'ya sahilden değil dağ tarafından iniyorsun. Trafik belirgin şekilde daha sakin, viraj yapısı keyifli.",
+      "en_iyi_zaman": "İlkbahar ve sonbahar",
+      "uyarilar": ["İç hatta yol genişliği ve asfalt kalitesi sahil yoluna göre değişken olabilir"],
+      "zorluk": "Orta"
+    },
+    {
+      "id": "finike-elmali-korkuteli",
+      "baslik": "Finike – Elmalı – Korkuteli",
+      "bolge": "Antalya",
+      "baslangic": "Finike, Antalya",
+      "bitis": "Korkuteli, Antalya",
+      "ara_noktalar": ["Arif, Finike", "Elmalı, Antalya"],
+      "kaynak": "derleme",
+      "aciklama": "Sahilden iç kesime tırmanan dönüş güzergahı. Forumda Elmalı'ya çıkan yolların virajlarının güzel, asfalt kalitesinin fena olmadığı belirtiliyor. Avlan Gölü çevresi ve yayla havası rotanın karakterini oluşturuyor. Sahil turuyla birleştirilerek halka tur yapılabilir.",
+      "en_iyi_zaman": "İlkbahar ve sonbahar; yazın serinlik avantajı",
+      "uyarilar": ["Yüksek kesimlerde sabah sisi görülebilir"],
+      "zorluk": "Orta"
+    },
+    {
+      "id": "koprulu-kanyon-aksu",
+      "baslik": "Köprülü Kanyon – Aksu (Isparta)",
+      "bolge": "Antalya / Isparta",
+      "baslangic": "Köprülü Kanyon Milli Parkı, Antalya",
+      "bitis": "Aksu, Isparta",
+      "ara_noktalar": [],
+      "kaynak": "derleme",
+      "aciklama": "Forumda viraj çalışmak isteyenlere önerilen, trafiğin neredeyse hiç olmadığı bir hat. Yaklaşık 100 kilometre boyunca viraj ve manzara; karşılaşacağın araç sayısının çok düşük olduğu belirtiliyor. Kanyon manzarası rotanın ana kozu.",
+      "en_iyi_zaman": "İlkbahar ve sonbahar",
+      "uyarilar": [
+        "ÖNEMLİ: Yolun yarısından sonra asfalt bitiyor — yol motosikletleri için uygun değil, adventure/enduro gerekiyor",
+        "Trafik ve yerleşim seyrek, arıza durumunda yardım uzak olabilir"
+      ],
+      "zorluk": "İleri (asfalt dışı bölüm içerir)"
+    },
+    {
+      "id": "antalya-fethiye-buyuk-sahil",
+      "baslik": "Antalya – Fethiye (Büyük Sahil Turu)",
+      "bolge": "Antalya / Muğla",
+      "baslangic": "Antalya",
+      "bitis": "Fethiye, Muğla",
+      "ara_noktalar": ["Kemer", "Finike", "Demre", "Kaş", "Kalkan"],
+      "kaynak": "derleme",
+      "aciklama": "Akdeniz'in en karakteristik uzun hattı. Kıvrımlı yollar, turkuaz kıyılar ve antik kentler bir arada. Konaklamalı planlanması gereken, çok duraklı bir tur. Küçük balıkçı köylerinde soluklanma imkanı var.",
+      "en_iyi_zaman": "İlkbahar ve sonbahar",
+      "uyarilar": ["Yaz sezonunda sahil trafiği ve turist yoğunluğu yüksek", "Uzun mesafe — konaklama planı şart"],
+      "zorluk": "Orta"
+    },
+    {
+      "id": "antalya-isparta",
+      "baslik": "Antalya – Isparta",
+      "bolge": "Antalya / Isparta",
+      "baslangic": "Antalya",
+      "bitis": "Isparta",
+      "ara_noktalar": [],
+      "kaynak": "derleme",
+      "aciklama": "Forumda 'nispeten daha sakin' olarak önerilen hat. Sahil trafiğinden uzaklaşıp göller bölgesine doğru rakım kazanan bir güzergah. Yaz sıcağından kaçmak için alternatif.",
+      "en_iyi_zaman": "Yaz aylarında serinlik için; ilkbahar-sonbahar genel olarak ideal",
+      "uyarilar": ["Rakım farkı nedeniyle hava koşulları hızlı değişebilir"],
+      "zorluk": "Kolay-Orta"
+    },
+
+    {
+      "id": "pozanti-belemedik-karsanti",
+      "baslik": "Pozantı – Belemedik – Karsantı",
+      "bolge": "Adana",
+      "baslangic": "Pozantı, Adana",
+      "bitis": "Karsantı, Aladağ, Adana",
+      "ara_noktalar": ["Belemedik, Pozantı"],
+      "kaynak": "derleme",
+      "aciklama": "Toros'un kalbinden geçen dağ hattı. Belemedik, tarihi Bağdat Demiryolu inşaatından kalma yapılarıyla ilgi çekici bir durak. Yükselen rakım, çam ormanları ve vadi manzarası rotanın karakteri. Motosiklet forumlarında Pozantı çıkışlı turların uğrak noktası olarak geçiyor.",
+      "en_iyi_zaman": "İlkbahar, yaz ve sonbahar",
+      "uyarilar": ["Kış aylarında yüksek kesimlerde kar ve buzlanma", "Bazı bağlantı yolları stabilize olabilir — güzergahı önceden kontrol et"],
+      "zorluk": "Orta"
+    },
+    {
+      "id": "adana-kozan-feke",
+      "baslik": "Adana – Kozan – Feke",
+      "bolge": "Adana",
+      "baslangic": "Adana",
+      "bitis": "Feke, Adana",
+      "ara_noktalar": ["Kozan, Adana"],
+      "kaynak": "derleme",
+      "aciklama": "Çukurova ovasından Toros eteklerine tırmanan klasik Adana dağ hattı. Kozan Kalesi ve çevresindeki tarihi doku rotayı zenginleştiriyor. Ova düzlüğünden dağ virajlarına geçiş rotanın karakterini oluşturuyor.",
+      "en_iyi_zaman": "İlkbahar ve sonbahar; yaz sıcağında sabah saatleri",
+      "uyarilar": ["Yaz aylarında ova kesiminde aşırı sıcak", "Yüksek kesimlerde kış koşulları"],
+      "zorluk": "Orta"
+    },
+    {
+      "id": "akdeniz-buyuk-tur",
+      "baslik": "Antalya – Hatay (Büyük Akdeniz Turu)",
+      "bolge": "Antalya / Mersin / Adana / Hatay",
+      "baslangic": "Antalya",
+      "bitis": "Hatay",
+      "ara_noktalar": ["Alanya", "Anamur", "Mersin", "Adana"],
+      "kaynak": "derleme",
+      "aciklama": "Akdeniz kıyısını boydan boya geçen çok günlük büyük tur. Sahil virajları, Toros geçişleri ve güneyin kültürel çeşitliliği bir arada. Konaklamalı planlanması zorunlu. Bölgeyi baştan sona sürmüş bir motorcunun forum notları bu güzergahın karakterini ve risklerini ayrıntılı anlatıyor.",
+      "en_iyi_zaman": "İlkbahar ve sonbahar",
+      "uyarilar": [
+        "Mersin trafiği hızlı akıyor, şerit değiştirmeler agresif — dikkat",
+        "Hatay'da şehir içi trafik yoğun ve düzensiz, özellikle gece azami dikkat",
+        "Güzergah boyunca ağır vasıta trafiği yüksek",
+        "Mersin–Tarsus arasında çok sayıda trafik ışığı var; dur-kalktan kaçınmak için otoyol tercih edilebilir"
+      ],
+      "zorluk": "Orta-İleri (çok günlük)"
+    },
+
+    {
+      "id": "artvin-savsat-ardahan",
+      "baslik": "Artvin – Şavşat – Ardahan",
+      "bolge": "Artvin / Ardahan",
+      "baslangic": "Artvin",
+      "bitis": "Ardahan",
+      "ara_noktalar": ["Şavşat, Artvin", "Karagöl"],
+      "kaynak": "derleme",
+      "aciklama": "Karadeniz'in dağlık yapısına uygun, geniş ve bol virajlı bir hat. Asfalt kalitesi büyük ölçüde iyi. Yüksek dağlar, derin vadiler ve yeşilin her tonu rotayı tanımlıyor. Fotoğraf molası için çok sayıda nokta var ama yolun asıl güzelliği sürerken hissediliyor. Türkiye'nin en çok önerilen motosiklet rotalarından biri olarak sayılıyor.",
+      "en_iyi_zaman": "Haziran–Eylül; sonbahar renkleri için Eylül-Ekim",
+      "uyarilar": ["Hava koşulları hızlı değişiyor, yağmurluk şart", "Yüksek kesimlerde sis", "Kış aylarında geçitler kapanabilir"],
+      "zorluk": "Orta"
+    },
+    {
+      "id": "zigana-gecidi",
+      "baslik": "Zigana Geçidi (Trabzon – Gümüşhane)",
+      "bolge": "Trabzon / Gümüşhane",
+      "baslangic": "Trabzon",
+      "bitis": "Gümüşhane",
+      "ara_noktalar": ["Zigana Geçidi"],
+      "kaynak": "derleme",
+      "aciklama": "Tarihi İpek Yolu'nun parçası olan geçit. Asfalt kalitesi yüksek, virajlar geniş ve hızlı — sürüş keyfi bakımından öne çıkıyor. Geçidin bir tarafında Karadeniz'in nemli havası, diğer yanında Doğu Anadolu'nun serinliği var; iklimin bu ani değişimi sürüşü sıradanlıktan çıkarıyor.",
+      "en_iyi_zaman": "Haziran–Eylül",
+      "uyarilar": ["Ani sis ve yağmur riski yüksek", "Kış aylarında zorlu koşullar", "Tünel geçişlerinde sıcaklık farkına dikkat"],
+      "zorluk": "Orta"
+    },
+    {
+      "id": "karadeniz-sahil-yolu",
+      "baslik": "Samsun – Artvin (Karadeniz Sahil Yolu)",
+      "bolge": "Samsun / Ordu / Giresun / Trabzon / Rize / Artvin",
+      "baslangic": "Samsun",
+      "bitis": "Artvin",
+      "ara_noktalar": ["Ordu", "Giresun", "Trabzon", "Rize"],
+      "kaynak": "derleme",
+      "aciklama": "Kıyıya paralel uzanan, büyük kısmı asfalt olan uzun sahil hattı. Çoğu zaman denizle iç içe, bazen ormanlarla çevrili, sıklıkla tarihi köylerin içinden geçiyor. Hem yeni başlayanlar hem deneyimli sürücüler için uygun. Yol boyunca yaylalara sapmak, yerel lezzetleri denemek ve şelalelere uğramak mümkün.",
+      "en_iyi_zaman": "Haziran–Eylül; sonbahar daha sakin",
+      "uyarilar": ["Karadeniz'in değişken havası — yağmurluk ve su geçirmez ekipman şart", "Sahil yolunda tünel ve ağır vasıta trafiği yoğun"],
+      "zorluk": "Kolay-Orta"
+    },
+    {
+      "id": "camlihemsin-pokut",
+      "baslik": "Çamlıhemşin – Pokut Yaylası",
+      "bolge": "Rize",
+      "baslangic": "Çamlıhemşin, Rize",
+      "bitis": "Pokut Yaylası, Çamlıhemşin",
+      "ara_noktalar": [],
+      "kaynak": "derleme",
+      "aciklama": "2200 metreyi aşan rakımı, sis denizleri ve ahşap yayla evleriyle Karadeniz'in en çarpıcı yayla rotalarından biri. Trafiğin çok düşük olması ve sessizlik sürüşü ayrı kılıyor.",
+      "en_iyi_zaman": "Temmuz–Eylül",
+      "uyarilar": [
+        "ÖNEMLİ: Rota asfalttan toprak yola geçiyor — yol motosikleti için uygun değil, off-road yeteneği ve deneyim gerekiyor",
+        "Sis ve ani hava değişimi",
+        "Yayla yollarında sinyal kaybı olabilir, offline harita indir"
+      ],
+      "zorluk": "İleri (asfalt dışı)"
+    },
+    {
+      "id": "borcka-karagol-macahel",
+      "baslik": "Borçka – Karagöl – Macahel",
+      "bolge": "Artvin",
+      "baslangic": "Borçka, Artvin",
+      "bitis": "Camili (Macahel), Borçka",
+      "ara_noktalar": ["Borçka Karagöl"],
+      "kaynak": "derleme",
+      "aciklama": "Sık ormanların içinden geçen, sessiz ve bol manzaralı bir güzergah. Göl kenarında kamp imkanı, köy yollarında yerel halkla sohbet fırsatı sunuyor. Türkiye'nin en el değmemiş köşelerinden birine açılıyor.",
+      "en_iyi_zaman": "Haziran–Eylül",
+      "uyarilar": ["Hava koşulları hızlı değişiyor", "Dar ve virajlı köy yolları", "Sınır bölgesi — kimlik bulundur"],
+      "zorluk": "Orta-İleri"
+    },
+    {
+      "id": "soganli-gecidi",
+      "baslik": "Soğanlı Geçidi (Trabzon – Bayburt)",
+      "bolge": "Trabzon / Bayburt",
+      "baslangic": "Of, Trabzon",
+      "bitis": "Bayburt",
+      "ara_noktalar": ["Hayrat, Trabzon"],
+      "kaynak": "derleme",
+      "aciklama": "2035 metre yükseklikte, 29 keskin viraja sahip tarihi geçit. Adrenalin arayanlar için Türkiye'nin en dikkat çekici yollarından biri olarak anılıyor. Manzara ve teknik zorluk bir arada.",
+      "en_iyi_zaman": "Temmuz–Eylül",
+      "uyarilar": [
+        "CİDDİ: Yağmurlu ve sisli havalarda tehlike belirgin artıyor — dünyanın zorlu yolları arasında gösteriliyor",
+        "Deneyimli sürücüler için; kötü havada girilmemeli",
+        "Kış aylarında kapalı olabilir"
+      ],
+      "zorluk": "İleri"
+    },
+
+    {
+      "id": "gokceada-turu",
+      "baslik": "Gökçeada Turu",
+      "bolge": "Çanakkale",
+      "baslangic": "Gökçeada, Çanakkale",
+      "bitis": "Gökçeada Merkez",
+      "ara_noktalar": ["Zeytinli", "Tepeköy", "Dereköy", "Bademli"],
+      "kaynak": "derleme",
+      "aciklama": "Feribotla ulaşılan ada turu. Bol viraj, engebeli yollar ve terk edilmiş Rum köyleri rotayı özel kılıyor. Zeytinli, Tepeköy, Dereköy ve Bademli köylerinde mola vermek turun ayrılmaz parçası. İzmir yönünden Geyikli, İstanbul yönünden Kabatepe limanından feribot var.",
+      "en_iyi_zaman": "Mayıs–Ekim",
+      "uyarilar": ["Feribot saatlerini önceden planla, sezonda doluluk yüksek", "Adada rüzgar sert olabiliyor", "Engebeli ve dar yollar"],
+      "zorluk": "Orta"
+    },
+    {
+      "id": "kumbag-sarkoy",
+      "baslik": "Kumbağ – Uçmakdere – Şarköy",
+      "bolge": "Tekirdağ",
+      "baslangic": "Kumbağ, Tekirdağ",
+      "bitis": "Şarköy, Tekirdağ",
+      "ara_noktalar": ["Uçmakdere, Şarköy"],
+      "kaynak": "derleme",
+      "aciklama": "Marmara'nın en bilinen günübirlik rotası. Ganos Dağları eteklerinde, üzüm bağları arasından geçen kısa ama etkileyici bir hat. Uçmakdere yamaç paraşütü tepesine çıkan yol, manzarası ve virajlarıyla rotanın en sevilen bölümü.",
+      "en_iyi_zaman": "İlkbahar ve sonbahar",
+      "uyarilar": ["Uçmakdere yokuşu dik ve virajlı", "Hafta sonu günübirlikçi trafiği artıyor"],
+      "zorluk": "Kolay-Orta"
+    },
+    {
+      "id": "istanbul-kirklareli-igneada",
+      "baslik": "Kırklareli – İğneada (Istranca Hattı)",
+      "bolge": "Kırklareli",
+      "baslangic": "Kırklareli",
+      "bitis": "İğneada, Demirköy",
+      "ara_noktalar": ["Demirköy, Kırklareli"],
+      "kaynak": "derleme",
+      "aciklama": "Istranca Dağları'nın orman içi yollarından geçerek İğneada longoz ormanlarına ulaşan rota. Trafiğin neredeyse hiç olmaması en büyük avantajı; orman içi viraj ve sessizlik rotanın karakteri.",
+      "en_iyi_zaman": "İlkbahar ve sonbahar",
+      "uyarilar": ["Istranca virajlarında dikkat gerekiyor", "Orman yolunda nemli/kaygan zemin olabilir", "Yerleşim seyrek, yakıt planı yap"],
+      "zorluk": "Orta"
+    },
+    {
+      "id": "sirnak-hakkari",
+      "baslik": "Şırnak – Hakkari",
+      "bolge": "Şırnak / Hakkari",
+      "baslangic": "Şırnak",
+      "bitis": "Hakkari",
+      "ara_noktalar": [],
+      "kaynak": "derleme",
+      "aciklama": "Kıvrımlı virajları, yüksek irtifalı geçitleri ve beklenenden iyi asfalt kalitesiyle bir performans rotası olarak anılıyor. Dağ manzaraları ve bölgenin kendine has atmosferi her kilometreyi farklı kılıyor.",
+      "en_iyi_zaman": "Haziran–Eylül",
+      "uyarilar": [
+        "Yüksek rakım — hava koşullarını önceden kontrol et",
+        "Uzun mesafelerde yerleşim ve yakıt seyrek olabilir",
+        "Bölgesel güncel durum ve yol bilgisi için yerel kaynaklardan teyit al"
+      ],
+      "zorluk": "Orta-İleri"
+    },
+    {
+      "id": "inebolu-kastamonu",
+      "baslik": "İnebolu – Kastamonu",
+      "bolge": "Kastamonu",
+      "baslangic": "İnebolu, Kastamonu",
+      "bitis": "Kastamonu",
+      "ara_noktalar": [],
+      "kaynak": "derleme",
+      "aciklama": "Karadeniz'in derin ormanlarının içinden geçen, asfalt kalitesi iyi ve virajları hem teknik hem keyifli bir hat. Çam ormanları ve yol boyunca çıkan köyler sürüşe ayrı bir tat katıyor. Kurtuluş Savaşı'nda İnebolu'dan cephane taşınan tarihi güzergah olması rotayı anlamlı kılıyor.",
+      "en_iyi_zaman": "Mayıs–Ekim",
+      "uyarilar": ["Orman içi kesimlerde nemli zemin", "Sis riski"],
+      "zorluk": "Orta"
+    },
+    {
+      "id": "kapadokya-turu",
+      "baslik": "Kapadokya Turu (Nevşehir Çevresi)",
+      "bolge": "Nevşehir",
+      "baslangic": "Ürgüp, Nevşehir",
+      "bitis": "Göreme, Nevşehir",
+      "ara_noktalar": ["Avanos", "Uçhisar"],
+      "kaynak": "derleme",
+      "aciklama": "Peribacaları arasında sürmek, motosiklet açısından Türkiye'de eşi olmayan bir deneyim. Asfalt hatlar günübirlik tur için yeterli; bölgede ayrıca off-road parkurları da mevcut. Vadi manzaraları ve jeolojik oluşumlar rotayı tanımlıyor.",
+      "en_iyi_zaman": "Nisan–Haziran, Eylül–Ekim (yaz çok sıcak)",
+      "uyarilar": ["Yaz aylarında aşırı sıcak", "Turist yoğunluğu ve tur otobüsü trafiği", "Vadi içi toprak yollar yol motosikleti için uygun değil"],
+      "zorluk": "Kolay-Orta"
+    },
+    {
+      "id": "ankara-tuz-golu",
+      "baslik": "Ankara – Tuz Gölü",
+      "bolge": "Ankara / Aksaray",
+      "baslangic": "Ankara",
+      "bitis": "Tuz Gölü, Aksaray",
+      "ara_noktalar": [],
+      "kaynak": "derleme",
+      "aciklama": "Bozkırın içinden geçen, sarı tarlalar ve beyaz göl manzarasıyla kontrast oluşturan bir rota. Viraj arayanlar için değil, uzun ve sakin bir sürüş isteyenler için. Hirfanlı Barajı çevresi alternatif durak olarak öneriliyor.",
+      "en_iyi_zaman": "İlkbahar ve sonbahar",
+      "uyarilar": ["Yazın aşırı sıcak ve gölgesiz", "Bozkırda yan rüzgar etkili olabiliyor", "Uzun düzlükler — dikkat dağınıklığına karşı mola planla"],
+      "zorluk": "Kolay"
+    }
+  ]
+}

@@ -46,3 +46,7 @@ example
 # Supabase CLI local cache (link metadata, connection strings)
 supabase/.temp/
 .idea/
+
+# supabase/seed/*.mjs script'lerinin oluşturduğu, parola içeren yerel
+# kimlik bilgisi dosyaları — asla commit edilmemeli.
+supabase/seed/.*-credentials.json

@@ -151,7 +151,24 @@ export function AppMapView({
       toNativeOverviewStop(plan, fitPadding),
       ...plan.roadStops.map(toNativeRoadStop),
     ];
-    cameraRef.current?.setCamera({ type: "CameraStops", stops: nativeStops });
+
+    // Terrain/RasterDemSource/SkyLayer bu render'da YENİ mount ediliyor —
+    // cameraRef bu tam anda henüz native tarafa bağlanmamış olabilir
+    // (gözlemlenen bir sorun: ref null iken setCamera sessizce hiçbir şey
+    // yapmıyor, ne hata ne log). Ref hazır olana kadar birkaç kare dene.
+    let cancelled = false;
+    let attempts = 0;
+    const trySetCamera = () => {
+      if (cancelled) return;
+      if (cameraRef.current) {
+        cameraRef.current.setCamera({ type: "CameraStops", stops: nativeStops });
+        return;
+      }
+      attempts += 1;
+      if (attempts > 30) return; // ~yarım saniye+ denedik, native view hiç hazır olmadı
+      requestAnimationFrame(trySetCamera);
+    };
+    trySetCamera();
 
     const startedAt = Date.now();
     flyoverTimerRef.current = setInterval(() => {
@@ -165,6 +182,7 @@ export function AppMapView({
     }, FLYOVER_PROGRESS_TICK_MS);
 
     return () => {
+      cancelled = true;
       if (flyoverTimerRef.current) {
         clearInterval(flyoverTimerRef.current);
         flyoverTimerRef.current = null;

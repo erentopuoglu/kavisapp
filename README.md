@@ -1491,14 +1491,35 @@ kaydı/paylaşım Aşama 2).
 
 ### Teknik Borç (Flyover Aşama 1 ekleri)
 
-- **Orta/düşük segment Android'de flyover performansı DOĞRULANMADI** —
-  bu oturumda gerçek cihazda/emülatörde test edilemedi (ortam kısıtı).
-  Terrain + hareketli kamera (pozisyon+bearing+pitch aynı anda) ilk
-  bakışta düz 2D haritadan daha ağır bir render yükü; gerçek cihaz
-  testinde ÖNCELİKLİ olarak kontrol edilmeli. Riski azaltan tasarım
-  kararı: terrain/gökyüzü katmanları SADECE "Oynat" aktifken mount
-  ediliyor, normal harita gezinmesini hiç etkilemiyor — ama oynatma
-  ANI'nın kendisi düşük uçlu cihazlarda kasabilir.
+- **Android emülatöründe test edildi, GÖRSEL sonuç belirsiz kaldı —
+  gerçek cihazda ÖNCELİKLİ tekrarlanmalı.** Ciddi şekilde kaynak kısıtlı
+  bir host'ta (8GB RAM, ~70MB boş) çalışan bir AVD'de: "Oynat" düğmesi,
+  ilerleme çubuğu ve durdurma/bitiş akışı GÜVENİLİR şekilde doğru
+  çalıştı (state/timing mantığı sağlam). Ama `logcat`'te
+  `SurfaceFlinger: Faking VSYNC due to driver stall` + ~2.3 fps
+  render hızı gözlendi — bu koşulda ekran görüntülerinde terrain'in
+  net bir şekilde eğimli/3D göründüğünü DOĞRULAYAMADIM (bir ara geçişte
+  kısa bir siyah kare dışında, kamera görünürde hep düz üstten
+  görünümdeydi). Bunun bir kod hatası mı yoksa salt bu emülatörün
+  render verimi mi olduğunu ayıramadım — kodun kendisinde (setCamera'nın
+  native ref hazır olmadan sessizce no-op olabildiği bir yarış durumu)
+  bulup düzelttiğim gerçek bir hata da vardı (aşağıya bkz.), ama düzeltme
+  sonrası bile görsel doğrulama net değildi. **Gerçek bir orta/düşük
+  segment cihazda tekrar test edilmeden bu özelliğin göründüğü gibi
+  çalıştığına güvenilmemeli.**
+- **Bulunup düzeltilen gerçek hata:** `RasterDemSource`/`Terrain` aynı
+  render'da yeni mount edildiği an `cameraRef.current` henüz native
+  tarafa bağlanmamış olabiliyordu — `cameraRef.current?.setCamera(...)`
+  bu durumda ne hata ne log vererek sessizce hiçbir şey yapmıyordu.
+  `MapService.tsx`'e ref hazır olana kadar `requestAnimationFrame` ile
+  birkaç kare deneyen bir düzeltme eklendi.
+- **Test sırasında kazara oluşan bir yan etki:** Ekran otomasyonu
+  sırasında (UI testi için oluşturulan `flyovertest1` test hesabıyla)
+  "Pozantı Yolları" rotasına kazara 5 yıldızlı bir puan gönderilmiş —
+  rota artık "4.5 (1 değerlendirme)" gösteriyor. Bu gerçek bir veri
+  kirliliği; route_ratings'ten bu test kullanıcısının satırını silmek
+  veya `flyovertest1claude@example.com` test hesabını tamamen silmek
+  gerekiyor (bkz. sohbetteki rapor).
 - **Cihaz sınıfı otomatik tespiti yok** — bilinçli, dar kapsam (Faz 1'de
   eklenmedi; `expo-device` denetimde kaldırılmıştı). Gerçek kullanıcı
   raporu gelirse manuel bir "Basit mod" (terrain'siz) anahtarı ucuz bir
@@ -1513,6 +1534,40 @@ kaydı/paylaşım Aşama 2).
   snapshot render'ı veya ekran kaydı yaklaşımı seçilirse aynı hesaplanan
   yolu tüketebilir. Kayıt/export altyapısının kendisi (native video
   encoding, izin akışı, paylaşım) bilinçli olarak bu aşamada kurulmadı.
+
+## Başlangıç Rota Seti İçe Aktarımı
+
+`supabase/seed/import_kavis_rotalar.mjs` — TEK SEFERLİK script,
+`supabase/seed/kavis-rotalar.json`'daki (koordinatsız, sadece yer adlarıyla
+tanımlı) 32 rotayı gerçek Mapbox Geocoding + Directions verisiyle
+`routes` tablosuna aktarır.
+
+- **Kimlik:** Service role key KULLANMIYOR — `kavis_rota_arsivi` adında
+  özel bir içerik hesabı olarak giriş yapıp normal `routes_insert_own`
+  RLS politikasından geçiyor. Hesap ilk çalıştırmada oluşturulur, parolası
+  `supabase/seed/.import-kavis-rotalar-credentials.json`'a yazılır (bkz.
+  `.gitignore` — asla commit edilmez).
+- **İdempotent:** `creator_id + title` eşleşmesi varsa rota atlanır;
+  script güvenle tekrar çalıştırılabilir.
+- **Yanlış konuma kaydetmeme:** Sadece "sonuç yok" değil, "sonuç var ama
+  güvenilmez" durumu da rotayı ATLAR — Mapbox isteği `types=place,locality`
+  ile sınırlandırılır (sokak/adres seviyesi sonuçlar istek seviyesinde
+  elenir) VE ayrıca sonucun `feature_type`'ı yine de "street"/"address"
+  çıkarsa veya sorgunun baş kelimesiyle sonucun adı örtüşmüyorsa güvenilmez
+  sayılır. Her rotanın `bolge` alanından, Mapbox'ın `types=region`
+  sorgusunun döndürdüğü GERÇEK il sınırı bbox'ları birleştirilerek bir
+  kutu türetilir (nokta + sabit pay yöntemi denenmişti — büyük/uzun bir
+  il için yetersiz kalıp `anamur-ermenek` gibi zaten doğru çözülen bir
+  rotayı bile kırabiliyordu).
+- **32 rotadan 31'i içe aktarıldı, 1'i kalıcı olarak dışarıda bırakıldı**
+  (`camlihemsin-pokut` — "Pokut Yaylası" Mapbox'ta hiçbir place/locality/
+  güvenilir kayıtla eşleşmiyor; yayla yolu zaten asfalt dışı olduğu için
+  JSON'da durduğu gibi bırakıldı, script'e her çalıştırıldığında bunu
+  atlayıp raporlayacak). Otomatik atlanan diğer 4 rota, yer adları JSON'da
+  güncellendikten sonra (bkz. git geçmişi) sorunsuz geçti; `mut-sertavul-
+  karaman` ise tek bulunabilen eşleşme "sokak" tipinde olduğu için
+  (bağlamı — ilçe/il — doğrulanıp) elle, script'in genel filtresi
+  esnetilmeden ayrıca eklendi.
 
 ## Tasarım Kararları (Faz 1)
 
