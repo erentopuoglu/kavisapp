@@ -538,11 +538,13 @@ ${cards}
 }
 
 function routeDetailPage(route) {
-  const meta = [
-    route.distance_km ? `${route.distance_km} km` : null,
-    formatDuration(route.estimated_duration_min),
-    route.region,
-  ].filter(Boolean);
+  // region BİLEREK burada yok — başlığın hemen üstünde
+  // .route-detail-region rozeti olarak zaten gösteriliyor, burada
+  // tekrarlarsak aynı bilgi iki kez (biri küçük rozet, biri büyük
+  // stat-value) görünürdü.
+  const meta = [route.distance_km ? `${route.distance_km} km` : null, formatDuration(route.estimated_duration_min)].filter(
+    Boolean
+  );
 
   const mapImageExists = existsSync(join(distDir, "rotalar", route.slug, "harita.png"));
   const ogImage = mapImageExists ? `${SITE_URL}/rotalar/${route.slug}/harita.png` : undefined;
