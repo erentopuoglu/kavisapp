@@ -41,6 +41,7 @@
     <a class="wordmark" href="/">Kavis</a>
     <div class="site-header-actions">
       <nav class="site-nav" aria-label="Ana gezinme">
+        <a href="/rotalar">Rotalar</a>
         <a href="/#ozellikler">Özellikler</a>
         <a href="/#hakkinda">Hakkında</a>
         <a href="/gizlilik">Gizlilik</a>
@@ -68,21 +69,7 @@
           işaret noktaları, grup sürüşleri ve soru-cevap forumu barındıran,
           motosiklet tutkunları için bir mobil uygulama.
         </p>
-
-        <form class="waitlist-form" id="waitlist-form" novalidate>
-          <div class="field">
-            <label for="waitlist-email" class="sr-only">E-posta adresiniz</label>
-            <input type="email" id="waitlist-email" name="email" placeholder="e-posta adresiniz" autocomplete="email" required>
-          </div>
-          <!-- Honeypot: gerçek kullanıcılar bunu görmez/doldurmaz, basit
-               botlar genelde doldurur — bkz. web/README.md "Spam koruması". -->
-          <div class="hp-field" aria-hidden="true">
-            <label for="waitlist-website">Website</label>
-            <input type="text" id="waitlist-website" name="website" tabindex="-1" autocomplete="off">
-          </div>
-          <button type="submit">Çıkınca Haber Ver</button>
-          <p class="waitlist-status" id="waitlist-status" role="status" aria-live="polite"></p>
-        </form>
+        <a class="hero-link" href="/rotalar">Rotaları keşfet →</a>
       </div>
 
       <div class="hero-visual" aria-hidden="true">
@@ -98,54 +85,96 @@
 
   <div class="lane" aria-hidden="true"></div>
 
+  <section class="stats-strip reveal" aria-label="Kavis rakamları">
+    <!--STATS_PLACEHOLDER-->
+  </section>
+
+  <div class="lane" aria-hidden="true"></div>
+
   <section class="features" id="ozellikler">
     <p class="features-label">Uygulamada Neler Var</p>
-    <div class="feature-grid">
-      <div class="feature-card">
-        <div class="feature-thumb" style="--thumb-tint: rgba(255, 122, 26, 0.18)">
-          <img src="/screenshots/rota-kesfi.png" alt="Kavis&#39;te rota keşfi ekranının görüntüsü" onerror="this.style.display='none'">
-        </div>
-        <div class="feature-card-body">
-          <h3>Rota Keşfi</h3>
-          <p>Motosiklet dostu rotaları keşfedin, puanlayın; kendi rotanızı haritada çizip toplulukla paylaşın.</p>
-        </div>
+
+    <div class="feature-row reveal">
+      <div class="feature-row-visual" style="--thumb-tint: rgba(255, 122, 26, 0.18)">
+        <img src="/screenshots/rota-kesfi.png" alt="Kavis&#39;te rota keşfi ekranının görüntüsü" onerror="this.style.display='none'">
       </div>
-      <div class="feature-card">
-        <div class="feature-thumb" style="--thumb-tint: rgba(255, 193, 7, 0.16)">
-          <img src="/screenshots/surus-kaydi.png" alt="Kavis&#39;te sürüş kaydı ekranının görüntüsü" onerror="this.style.display='none'">
-        </div>
-        <div class="feature-card-body">
-          <h3>Sürüş Kaydı</h3>
-          <p>Sürüşünüzü GPX olarak kaydedin veya içe aktarın; mesafe, süre ve ortalama hızınızı görün.</p>
-        </div>
+      <div class="feature-row-body">
+        <h3>Rota Keşfi</h3>
+        <p>Motosiklet dostu rotaları keşfedin, puanlayın; kendi rotanızı haritada çizip toplulukla paylaşın.</p>
       </div>
-      <div class="feature-card">
-        <div class="feature-thumb" style="--thumb-tint: rgba(229, 72, 77, 0.14)">
-          <img src="/screenshots/isaretli-noktalar.png" alt="Kavis&#39;te işaretli noktalar ekranının görüntüsü" onerror="this.style.display='none'">
-        </div>
-        <div class="feature-card-body">
-          <h3>İşaretli Noktalar</h3>
-          <p>Benzinlik, mola noktası, tehlikeli viraj gibi topluluk kaynaklı işaretleri haritada görün, oy verin.</p>
-        </div>
+    </div>
+
+    <div class="feature-row reveal">
+      <div class="feature-row-visual" style="--thumb-tint: rgba(255, 193, 7, 0.16)">
+        <img src="/screenshots/surus-kaydi.png" alt="Kavis&#39;te sürüş kaydı ekranının görüntüsü" onerror="this.style.display='none'">
       </div>
-      <div class="feature-card">
-        <div class="feature-thumb" style="--thumb-tint: rgba(61, 220, 132, 0.13)">
-          <img src="/screenshots/grup-suruslari.png" alt="Kavis&#39;te grup sürüşü etkinliği ekranının görüntüsü" onerror="this.style.display='none'">
-        </div>
-        <div class="feature-card-body">
-          <h3>Grup Sürüşleri</h3>
-          <p>Etkinlik oluşturun, katılımcıları onaylayın; sürüş sırasında canlı konum ve sohbetle bağlı kalın.</p>
-        </div>
+      <div class="feature-row-body">
+        <h3>Sürüş Kaydı</h3>
+        <p>Sürüşünüzü GPX olarak kaydedin veya içe aktarın; mesafe, süre ve ortalama hızınızı görün.</p>
       </div>
-      <div class="feature-card">
-        <div class="feature-thumb" style="--thumb-tint: rgba(255, 122, 26, 0.18)">
-          <img src="/screenshots/forum.png" alt="Kavis&#39;te soru-cevap forumu ekranının görüntüsü" onerror="this.style.display='none'">
-        </div>
-        <div class="feature-card-body">
-          <h3>Soru-Cevap Forumu</h3>
-          <p>Motosikletinizle ilgili sorular sorun, topluluktan cevap alın, en iyi cevabı işaretleyin.</p>
-        </div>
+    </div>
+
+    <div class="feature-row reveal">
+      <div class="feature-row-visual" style="--thumb-tint: rgba(229, 72, 77, 0.14)">
+        <img src="/screenshots/isaretli-noktalar.png" alt="Kavis&#39;te işaretli noktalar ekranının görüntüsü" onerror="this.style.display='none'">
       </div>
+      <div class="feature-row-body">
+        <h3>İşaretli Noktalar</h3>
+        <p>Benzinlik, mola noktası, tehlikeli viraj gibi topluluk kaynaklı işaretleri haritada görün, oy verin.</p>
+      </div>
+    </div>
+
+    <div class="feature-row reveal">
+      <div class="feature-row-visual" style="--thumb-tint: rgba(61, 220, 132, 0.13)">
+        <img src="/screenshots/grup-suruslari.png" alt="Kavis&#39;te grup sürüşü etkinliği ekranının görüntüsü" onerror="this.style.display='none'">
+      </div>
+      <div class="feature-row-body">
+        <h3>Grup Sürüşleri</h3>
+        <p>Etkinlik oluşturun, katılımcıları onaylayın; sürüş sırasında canlı konum ve sohbetle bağlı kalın.</p>
+      </div>
+    </div>
+
+    <div class="feature-row reveal">
+      <div class="feature-row-visual" style="--thumb-tint: rgba(255, 122, 26, 0.18)">
+        <img src="/screenshots/forum.png" alt="Kavis&#39;te soru-cevap forumu ekranının görüntüsü" onerror="this.style.display='none'">
+      </div>
+      <div class="feature-row-body">
+        <h3>Soru-Cevap Forumu</h3>
+        <p>Motosikletinizle ilgili sorular sorun, topluluktan cevap alın, en iyi cevabı işaretleyin.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="waitlist-cta reveal" id="waitlist">
+    <div class="waitlist-cta-inner">
+      <h2>Çıkınca ilk sen haber al</h2>
+      <p>Uygulama yayına girdiğinde e-posta ile haber verelim &mdash; spam yok, sadece bir bildirim.</p>
+      <form class="waitlist-form" id="waitlist-form" novalidate>
+        <div class="field">
+          <label for="waitlist-email" class="sr-only">E-posta adresiniz</label>
+          <input type="email" id="waitlist-email" name="email" placeholder="e-posta adresiniz" autocomplete="email" required>
+        </div>
+        <!-- Honeypot: gerçek kullanıcılar bunu görmez/doldurmaz, basit
+             botlar genelde doldurur — bkz. web/README.md "Spam koruması". -->
+        <div class="hp-field" aria-hidden="true">
+          <label for="waitlist-website">Website</label>
+          <input type="text" id="waitlist-website" name="website" tabindex="-1" autocomplete="off">
+        </div>
+        <button type="submit">Çıkınca Haber Ver</button>
+        <p class="waitlist-status" id="waitlist-status" role="status" aria-live="polite"></p>
+      </form>
+    </div>
+  </section>
+
+  <div class="lane" aria-hidden="true"></div>
+
+  <section class="featured-routes reveal" aria-labelledby="featured-routes-heading">
+    <div class="featured-routes-head">
+      <h2 id="featured-routes-heading">Öne Çıkan Rotalar</h2>
+      <a class="text-link" href="/rotalar">Tüm rotaları gör →</a>
+    </div>
+    <div class="featured-routes-grid">
+      <!--FEATURED_ROUTES_PLACEHOLDER-->
     </div>
   </section>
 
@@ -153,17 +182,29 @@
 
   <section class="about" id="hakkinda">
     <h2>Kavis Hakkında</h2>
-    <div class="about-card">
-      <span class="about-tag">Kurucudan</span>
-      <p>Motor hevesim dört yaşında, babamın kucağında gidona uzanmaya çalışırken başladı. Bugün bir Dominar 400 UG ile aynı yollardayım.</p>
-      <p>Yazılım mühendisliği son sınıf öğrencisiyim. Kavis, iki tutkumu birleştirme fikrinden doğdu: sürerken yaşadığım sorunları, yazabildiğim kodla çözmek.</p>
-      <p>Çünkü hep aynı şeyleri yaşadım. Güzel bir rota bulmak için forumları, sözlük başlıklarını, dağınık WhatsApp gruplarını taramak. Bir grup sürüşü organize etmeye çalışırken mesajların arasında kaybolmak. Yolda motorcuya gerçekten iyi davranan bir kafeyi, güvenli bir mola noktasını ancak tesadüfen keşfetmek. Bu bilgiler aslında hep vardı &mdash; sadece bir arada değildi.</p>
-      <p>Kavis&rsquo;i onun için yapıyorum: rotaların, işaretli noktaların ve motorcuların tek bir yerde buluştuğu bir uygulama.</p>
-      <p>Bir yıl sonra Kavis&rsquo;i Türkiye&rsquo;nin her yerinden, her yaştan motorcunun kullandığı bir topluluk olarak görmek istiyorum. Ama şunu unutmayalım: <em>motorcunun dostu yine motorcudur</em>. Bu uygulamayı birlikte geliştirip birlikte büyüteceğiz.</p>
+    <div class="about-card reveal">
+      <p>Motor hevesim dört yaşında, babamın kucağında gidona uzanmaya çalışırken başladı. O gidonun ne olduğunu anlamadan sevmiştim. Bugün bir Dominar 400 UG ile aynı yollardayım ve o his hiç değişmedi.</p>
+      <p>Değişen tek şey, yolda ne aradığım oldu. Büyüdükçe sürüş sadece &ldquo;gaz vermek&rdquo; olmaktan çıktı; nereye gideceğini seçmek, kimlerle gideceğini bulmak, yolda nerede duracağını bilmek haline geldi. Ve her seferinde aynı duvara tosladım.</p>
+      <p>Güzel bir rota bulmak için forumları, sözlük başlıklarını, birbirine benzeyen listeleri tarıyordum. Bir grup sürüşü ayarlamaya çalışırken plan WhatsApp mesajlarının arasında kayboluyordu. Motorcuya gerçekten iyi davranan bir kafeyi, güvenli bir mola noktasını ancak yolda tesadüfen keşfediyordum &mdash; ve o bilgi de benimle kalıyordu, kimseye ulaşmıyordu.</p>
+      <p>Aslında bu bilgilerin hepsi vardı. Bir yerlerde, birilerinin aklında, dağınık gruplarda. Sadece bir arada değildi.</p>
+      <p>Bir yandan da yazılım mühendisliği okuyordum. Bir süre sonra fark ettim ki bu iki şey aynı sorunun iki yakası: yolda eksikliğini hissettiğim şeyi, aslında yazabilirdim.</p>
+      <p>Kavis bu yüzden var. Rotaların, işaretli noktaların ve motorcuların tek bir yerde buluştuğu, benim de her hafta kullandığım bir uygulama olsun diye.</p>
+      <p>Bir yıl sonra Kavis&rsquo;i Türkiye&rsquo;nin her yerinden, her yaştan motorcunun kullandığı bir topluluk olarak görmek istiyorum. Ama bunu tek başıma yapamam &mdash; zaten öyle de olmamalı. <em>Motorcunun dostu yine motorcudur.</em> Bu uygulamayı birlikte geliştirip birlikte büyüteceğiz.</p>
       <p>Bir fikrin, bir önerin ya da bir sorunun mu var? Yaz bana: <a href="mailto:info@kavisapp.com">info@kavisapp.com</a></p>
       <div class="about-signature">
         <div class="about-name">Eren Topuoğlu</div>
         <div class="about-role">Kavis App geliştiricisi</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="closing-cta reveal">
+    <div class="closing-cta-inner">
+      <h2>Yolun geri kalanı Kavis&rsquo;le.</h2>
+      <p>Rotanı çiz, topluluğa katıl &mdash; yayına girdiğimizde ilk haberi sen al.</p>
+      <div class="closing-cta-actions">
+        <a class="button-primary" href="#waitlist">Çıkınca Haber Ver</a>
+        <a class="button-secondary" href="/rotalar">Rotaları Keşfet</a>
       </div>
     </div>
   </section>
@@ -187,6 +228,7 @@
   </div>
 </footer>
 
+<script src="/site.js" defer></script>
 <script>
 (function () {
   var SUPABASE_URL = "__SUPABASE_URL__";

@@ -146,11 +146,18 @@ img {
   flex-wrap: wrap;
   align-items: center;
   gap: 10px clamp(16px, 3.5vw, 32px);
+  min-width: 0;
 }
 
 .site-nav {
   display: flex;
   flex-wrap: wrap;
+  /* min-width:0 olmadan, iç içe flex konteynerlerde (bu .site-header-
+     actions'ın, o da .site-header-inner'ın flex item'ı) tarayıcı bu
+     elemanın içeriğinin doğal genişliğinden KÜÇÜLMESİNE izin vermiyor —
+     kendi flex-wrap'i olsa bile satır kaymadan önce taşabiliyordu (dar
+     ekranda "Rotalar" eklenince görünür hale geldi). */
+  min-width: 0;
   gap: 8px clamp(14px, 3vw, 28px);
   font-family: "IBM Plex Mono", ui-monospace, monospace;
   font-size: 12.5px;
@@ -457,7 +464,7 @@ body.page-home {
 }
 
 .phone-screen img,
-.feature-thumb img {
+.feature-row-visual img {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -466,7 +473,7 @@ body.page-home {
 }
 
 /* ---------------------------------------------------------------------
-   Özellik kartları
+   Özellik satırları — alternatif hizalama (tek: görsel solda, çift: sağda)
 --------------------------------------------------------------------- */
 
 .features {
@@ -479,64 +486,73 @@ body.page-home {
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--text-tertiary);
-  margin: 0 0 20px;
+  margin: 0 0 8px;
 }
 
-.feature-grid {
+.feature-row {
   display: grid;
-  /* 5 kart var — 340px eşiği geniş ekranda 3 sütuna sabitliyor (3+2 satır,
-     4 sütunlu bir 4+1'den çok daha dengeli görünüyor), dar ekranda 2'ye,
-     mobilde 1'e düşüyor. */
-  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-  gap: 1px;
-  background: var(--border);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  overflow: hidden;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: clamp(28px, 6vw, 64px);
+  align-items: center;
+  padding: clamp(28px, 5vw, 48px) 0;
+  border-bottom: 1px solid var(--border);
+}
+.feature-row:last-child {
+  border-bottom: none;
 }
 
-.feature-card {
-  background: var(--surface);
-  display: flex;
-  flex-direction: column;
+/* Çift sıralar (2., 4., ...) görseli sağa alır — DOM sırası (ve dolayısıyla
+   okuma/erişilebilirlik sırası: başlık+metin önce) değişmiyor, sadece
+   görsel konumu grid-column ile tersleniyor. */
+.feature-row:nth-child(even) .feature-row-visual {
+  grid-column: 2;
+  grid-row: 1;
+}
+.feature-row:nth-child(even) .feature-row-body {
+  grid-column: 1;
+  grid-row: 1;
 }
 
-.feature-thumb {
+.feature-row-visual {
   position: relative;
   aspect-ratio: 4 / 3;
   overflow: hidden;
+  border-radius: 18px;
   background: linear-gradient(160deg, var(--surface-2) 0%, var(--surface) 100%);
-  border-bottom: 1px solid var(--border);
+  border: 1px solid var(--border);
 }
 
-/* Her karta hafif farklı bir renk vurgusu — gerçek ekran görüntüleri
-   gelene kadar kartların birbirinden ayırt edilmesine yardımcı olur. */
-.feature-thumb::before {
+/* Gerçek ekran görüntüsü gelene kadar kartları ayırt eden renk vurgusu. */
+.feature-row-visual::before {
   content: "";
   position: absolute;
   inset: 0;
   background: radial-gradient(circle at 30% 20%, var(--thumb-tint, rgba(255, 122, 26, 0.16)), transparent 60%);
 }
 
-.feature-card-body {
-  padding: 20px 22px 26px;
+.feature-row-body {
+  max-width: 46ch;
+}
+.feature-row:nth-child(even) .feature-row-body {
+  justify-self: end;
+  text-align: right;
 }
 
-.feature-card h3 {
+.feature-row h3 {
   font-family: "Oswald", "Arial Narrow", sans-serif;
   font-weight: 500;
-  font-size: 16.5px;
+  font-size: clamp(20px, 2.6vw, 25px);
   letter-spacing: 0.01em;
   text-transform: uppercase;
-  margin: 0 0 8px;
+  margin: 0 0 12px;
   color: var(--text);
 }
 
-.feature-card p {
+.feature-row p {
   margin: 0;
-  font-size: 14.5px;
+  font-size: 16px;
   color: var(--text-secondary);
-  line-height: 1.55;
+  line-height: 1.6;
 }
 
 /* ---------------------------------------------------------------------
@@ -656,16 +672,6 @@ body.page-home {
   background: var(--surface);
 }
 
-.about-card .about-tag {
-  display: inline-block;
-  font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 11.5px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--accent);
-  margin-bottom: 14px;
-}
-
 .about-card p {
   margin: 0 0 14px;
   color: var(--text-secondary);
@@ -705,6 +711,458 @@ body.page-home {
   color: var(--text-tertiary);
 }
 
+.hero-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: clamp(20px, 4vw, 28px);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 13.5px;
+  letter-spacing: 0.02em;
+  color: var(--text);
+}
+.hero-link:hover,
+.hero-link:focus-visible {
+  color: var(--accent);
+}
+
+/* ---------------------------------------------------------------------
+   Ortak buton stilleri (kapanış CTA'sı ve ileride başka yerler için)
+--------------------------------------------------------------------- */
+
+.button-primary,
+.button-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 52px;
+  padding: 0 28px;
+  border-radius: 10px;
+  font-family: "Oswald", "Arial Narrow", sans-serif;
+  font-weight: 600;
+  font-size: 14.5px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.button-primary:hover,
+.button-primary:focus-visible {
+  text-decoration: none;
+  background: var(--accent-pressed);
+}
+.button-secondary:hover,
+.button-secondary:focus-visible {
+  text-decoration: none;
+  border-color: var(--text-secondary);
+  color: var(--text);
+}
+
+.button-primary {
+  background: var(--accent);
+  color: var(--accent-ink);
+  border: none;
+}
+
+.button-secondary {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-strong);
+}
+
+/* ---------------------------------------------------------------------
+   İstatistik şeridi (ana sayfa)
+--------------------------------------------------------------------- */
+
+.stats-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(24px, 6vw, 56px);
+  padding: clamp(8px, 2vw, 16px) 0;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stat-value {
+  font-family: "Oswald", "Arial Narrow", sans-serif;
+  font-weight: 600;
+  font-size: clamp(28px, 4vw, 38px);
+  color: var(--accent);
+  line-height: 1;
+}
+
+.stat-label {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+}
+
+/* ---------------------------------------------------------------------
+   Bekleme listesi CTA'sı (özellik kartlarından sonra)
+--------------------------------------------------------------------- */
+
+.waitlist-cta {
+  padding: clamp(32px, 6vw, 56px) 0;
+}
+
+.waitlist-cta-inner {
+  max-width: 560px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: clamp(28px, 5vw, 40px);
+  background: linear-gradient(160deg, var(--surface-2) 0%, var(--surface) 100%);
+}
+
+.waitlist-cta h2 {
+  font-family: "Oswald", "Arial Narrow", sans-serif;
+  font-weight: 600;
+  font-size: clamp(24px, 3.4vw, 30px);
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+  margin: 0 0 10px;
+}
+
+.waitlist-cta p {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.waitlist-cta .waitlist-form {
+  max-width: none;
+}
+
+/* ---------------------------------------------------------------------
+   Rota kartları — /rotalar (liste) VE ana sayfa "Öne Çıkan Rotalar"
+   bölümü aynı .route-card bileşenini paylaşır.
+--------------------------------------------------------------------- */
+
+.featured-routes-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.featured-routes-head h2 {
+  font-family: "Oswald", "Arial Narrow", sans-serif;
+  font-weight: 600;
+  font-size: clamp(24px, 3.4vw, 30px);
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.text-link {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.featured-routes {
+  padding: clamp(24px, 5vw, 40px) 0;
+}
+
+.featured-routes-grid,
+.routes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.route-card {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  overflow: hidden;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+.route-card:hover,
+.route-card:focus-visible {
+  border-color: var(--border-strong);
+  transform: translateY(-2px);
+  text-decoration: none;
+}
+
+.route-card-map {
+  aspect-ratio: 16 / 10;
+  background: linear-gradient(160deg, var(--surface-2) 0%, var(--surface) 100%);
+  overflow: hidden;
+}
+.route-card-map img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.route-card-body {
+  padding: 16px 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.route-card-region {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 11.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.route-card-title {
+  font-family: "Oswald", "Arial Narrow", sans-serif;
+  font-weight: 500;
+  font-size: 17px;
+  color: var(--text);
+  margin: 0;
+}
+
+.route-card-meta {
+  margin-top: auto;
+  padding-top: 6px;
+  font-size: 13.5px;
+  color: var(--text-secondary);
+}
+
+/* ---------------------------------------------------------------------
+   Kapanış CTA'sı (about'tan sonra, footer'dan önce)
+--------------------------------------------------------------------- */
+
+.closing-cta {
+  padding: clamp(40px, 8vw, 72px) 0 clamp(56px, 10vw, 96px);
+  text-align: center;
+}
+
+.closing-cta-inner {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: clamp(36px, 6vw, 56px) clamp(20px, 5vw, 40px);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: radial-gradient(circle at 50% 0%, rgba(255, 122, 26, 0.1), transparent 60%), var(--surface);
+}
+
+.closing-cta h2 {
+  font-family: "Oswald", "Arial Narrow", sans-serif;
+  font-weight: 600;
+  font-size: clamp(26px, 4.4vw, 38px);
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+  margin: 0 0 12px;
+  text-wrap: balance;
+}
+
+.closing-cta p {
+  margin: 0 0 28px;
+  color: var(--text-secondary);
+  font-size: 16px;
+}
+
+.closing-cta-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
+/* ---------------------------------------------------------------------
+   Scroll ile beliren yumuşak animasyon (bkz. site.js)
+--------------------------------------------------------------------- */
+
+.reveal {
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ---------------------------------------------------------------------
+   /rotalar — liste sayfası (bölge filtresi + breadcrumb + rota detayı)
+--------------------------------------------------------------------- */
+
+.routes-header {
+  padding: clamp(32px, 6vw, 56px) 0 clamp(20px, 4vw, 28px);
+}
+
+.routes-header h1 {
+  font-family: "Oswald", "Arial Narrow", sans-serif;
+  font-weight: 600;
+  font-size: clamp(32px, 5vw, 46px);
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+  margin: 0 0 10px;
+}
+
+.routes-header p {
+  color: var(--text-secondary);
+  max-width: 60ch;
+  margin: 0;
+}
+
+.route-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 24px 0 28px;
+}
+
+.route-filter button {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 12.5px;
+  letter-spacing: 0.03em;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.route-filter button:hover {
+  border-color: var(--text-secondary);
+  color: var(--text);
+}
+.route-filter button.is-active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+
+.routes-list {
+  padding-bottom: clamp(56px, 8vw, 88px);
+}
+
+.breadcrumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 12px;
+  color: var(--text-tertiary);
+  padding: clamp(20px, 4vw, 28px) 0 0;
+}
+.breadcrumbs a {
+  color: var(--text-tertiary);
+}
+.breadcrumbs a:hover {
+  color: var(--text-secondary);
+}
+
+.route-detail-header {
+  padding: 16px 0 clamp(20px, 4vw, 28px);
+}
+
+.route-detail-region {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 12.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 10px;
+}
+
+.route-detail-header h1 {
+  font-family: "Oswald", "Arial Narrow", sans-serif;
+  font-weight: 600;
+  font-size: clamp(30px, 5vw, 44px);
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+  margin: 0;
+  text-wrap: balance;
+}
+
+.route-map-frame {
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  margin-bottom: 24px;
+}
+.route-map-frame img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.route-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(20px, 4vw, 40px);
+  padding: 20px 0;
+  margin-bottom: 8px;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.route-body {
+  max-width: 68ch;
+  padding-bottom: clamp(48px, 8vw, 72px);
+}
+
+.route-body p {
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+.route-warning-box {
+  display: flex;
+  gap: 12px;
+  border: 1px solid var(--warning-border);
+  background: var(--warning-bg);
+  border-radius: 12px;
+  padding: 16px 18px;
+  margin: 24px 0;
+}
+.route-warning-box svg {
+  flex: none;
+  color: var(--warning);
+  margin-top: 2px;
+}
+.route-warning-box div {
+  color: var(--text);
+}
+.route-warning-box p {
+  color: var(--text);
+  margin: 0 0 6px;
+}
+.route-warning-box p:last-child {
+  margin-bottom: 0;
+}
+
+.route-info-line {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 13.5px;
+  color: var(--text-tertiary);
+  margin: 18px 0;
+}
+.route-info-line strong {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.route-app-cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 32px;
+  padding-top: 28px;
+  border-top: 1px dashed var(--border);
+}
+
 /* ---------------------------------------------------------------------
    Responsive — hero grid ve dar ekranlar
 --------------------------------------------------------------------- */
@@ -719,6 +1177,22 @@ body.page-home {
   }
   .phone-frame {
     width: min(220px, 52vw);
+  }
+  .feature-row,
+  .feature-row:nth-child(even) {
+    grid-template-columns: 1fr;
+  }
+  .feature-row-visual,
+  .feature-row:nth-child(even) .feature-row-visual,
+  .feature-row:nth-child(even) .feature-row-body {
+    grid-column: 1;
+    grid-row: auto;
+  }
+  .feature-row-body,
+  .feature-row:nth-child(even) .feature-row-body {
+    max-width: none;
+    justify-self: stretch;
+    text-align: left;
   }
 }
 

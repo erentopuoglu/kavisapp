@@ -76,6 +76,11 @@ export interface Database {
           id: string;
           creator_id: string;
           title: string;
+          // kavisapp.com/rotalar/{slug} için kalıcı tanımlayıcı — bir kez
+          // üretildikten sonra title değişse bile DEĞİŞMEZ (bkz.
+          // 0013_routes_slug.sql'deki trigger). Client hiçbir zaman
+          // yazmaz, bu yüzden Insert/Update'te yok.
+          slug: string;
           description: string | null;
           // PostgREST bu sütunu EWKB hex metni olarak döndürür (GeoJSON
           // DEĞİL) — haritada göstermek için path_geojson kullanın.

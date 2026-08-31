@@ -1,11 +1,52 @@
 # kavisapp.com — statik site
 
 `kavisapp.com` için basit, framework'süz bir statik site: bir landing page
-(`/`, telefon mockup'ı + özellik kartları + "Çıkınca haber ver" e-posta
-kaydı + "Kavis Hakkında" bölümü) ve mağaza başvuruları için gereken iki
-yasal sayfa (`/gizlilik`, `/kosullar`). Bu klasör, ana Expo/React Native
-uygulamasından tamamen ayrı — sadece Cloudflare Pages'e deploy edilecek
-statik dosyaları içerir.
+(`/`, telefon mockup'ı + alternatif hizalı özellik satırları + "Çıkınca
+haber ver" e-posta kaydı + "Kavis Hakkında" bölümü + kapanış CTA'sı), bir
+rota vitrini (`/rotalar`, `/rotalar/{slug}` — bkz. aşağıdaki bölüm) ve
+mağaza başvuruları için gereken iki yasal sayfa (`/gizlilik`, `/kosullar`).
+Bu klasör, ana Expo/React Native uygulamasından tamamen ayrı — sadece
+Cloudflare Pages'e deploy edilecek statik dosyaları içerir.
+
+## Rota Vitrini (`/rotalar`, `/rotalar/{slug}`)
+
+Supabase'deki (`routes` tablosu, `is_hidden=false`) tüm rotalar **build
+zamanında bir kez** çekilip statik HTML'e dönüştürülüyor — ziyaretçi
+tarayıcısı hiçbir zaman Supabase'e istek atmıyor (bkz. `build.mjs`
+başındaki uzun yorum). Bunun pratik sonucu: **rota içeriği değiştiğinde
+(yeni rota eklendiğinde, `supabase/seed/import_kavis_rotalar.mjs`
+çalıştırıldığında vb.) siteyi yeniden derlemeniz (`node web/build.mjs`
+veya `master`'a push) gerekir** — aksi halde site eski rota listesini
+göstermeye devam eder.
+
+- **Slug:** `routes.slug` kolonundan (bkz. ana repo
+  `supabase/migrations/0013_routes_slug.sql`) — DB'de zaten kalıcı ve
+  benzersiz, build script'i bunu türetmiyor, olduğu gibi kullanıyor.
+- **Harita görselleri:** Her rotanın `path_geojson`'ı Mapbox Static
+  Images API'ye (koyu tema, `mapbox/dark-v11` — uygulamadaki
+  `Mapbox.StyleURL.Dark` ile aynı) gönderilip PNG BUILD SIRASINDA bir kez
+  indirilir, `dist/rotalar/{slug}/harita.png` olarak diske yazılır. Canlı
+  bir Mapbox URL'i `<img>`'e gömülmüyor — bu hem siteyi tamamen
+  self-hosted tutuyor hem Mapbox faturasını (Static Images API, aylık
+  50.000 istek ücretsiz) ziyaretçi sayısından bağımsız, sadece build
+  başına yapıyor. Bir rotanın haritası indirilemezse (ağ hatası, eksik
+  token) build DURMAZ — o rota haritasız, gradyan arka planla kalır.
+- **Bölge filtresi** (`/rotalar` sayfası) tamamen istemci tarafı vanilla
+  JS (`site.js`) — `region` alanı "/" ile bölünüp piller üretiliyor,
+  filtreleme yeniden sorgu atmadan göster/gizle ile çalışıyor.
+- **JSON-LD:** her rota sayfasında `TouristAttraction` + `BreadcrumbList`
+  yapılandırılmış verisi var (arama motoru sonuçlarında zengin görünüm
+  için).
+- **"Uygulamada Aç"** `kavis://rota/{uuid}` derin bağlantısını kullanıyor
+  (app.config.ts'teki `scheme:"kavis"` + expo-router'ın dosya tabanlı
+  otomatik linkingi — ayrı bir linking config'i yok). Mağaza linki henüz
+  olmadığı için "İndir" şimdilik ana sayfadaki bekleme listesine
+  yönleniyor.
+- **Rotalar hiç çekilemezse** (Supabase yapılandırılmış ama istek
+  başarısız — ör. `routes.slug` kolonu henüz eklenmemiş) **build BAŞARISIZ
+  olur** (bilerek — sessizce "0 rota" ile eksik bir site yayınlanmasın
+  diye). Supabase hiç yapılandırılmamışsa (env değişkenleri yok) build
+  BAŞARILI olur ama rota vitrini hiç üretilmez, sadece bir uyarı basılır.
 
 ## Tek kaynak (single source of truth)
 
@@ -106,13 +147,17 @@ uğraşmıyorsunuz).
    - **Build output directory:** `dist`
    - **Root directory (Advanced):** `web` — **bu adım kritik**, aksi halde
      Cloudflare repo kökünde `build.mjs` arar ve bulamaz.
-   - **Environment variables (Advanced)** — "Çıkınca haber ver" formunun
-     çalışması için **ikisini de** ekleyin (Production ve Preview için
+   - **Environment variables (Advanced)** — "Çıkınca haber ver" formu VE
+     rota vitrini için **üçünü de** ekleyin (Production ve Preview için
      ayrı ayrı, veya "Same value for all environments"):
      - `EXPO_PUBLIC_SUPABASE_URL` = `.env`'deki değerle aynı
      - `EXPO_PUBLIC_SUPABASE_ANON_KEY` = `.env`'deki değerle aynı (bu
        anon key zaten public/istemci-güvenli — mobil app bundle'ına da
        gömülü, RLS erişimi belirliyor, secret değil)
+     - `EXPO_PUBLIC_MAPBOX_PUBLIC_TOKEN` = `.env`'deki değerle aynı (bu da
+       public/pk. token — rota haritası görsellerini build sırasında
+       üretmek için gerekli, bkz. "Rota Vitrini" bölümü. Eksikse build
+       yine BAŞARILI olur, sadece harita görselleri üretilmez)
 4. **Save and Deploy**. İlk deploy birkaç dakika sürer; bitince
    `https://kavisapp.pages.dev` (veya seçtiğiniz isim) üzerinden siteyi
    görebilirsiniz — bu geçici/test adresi. Formu bir test e-postasıyla
