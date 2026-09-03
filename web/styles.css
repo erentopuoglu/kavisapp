@@ -31,6 +31,11 @@
   --success-bg: #14261c;
   --success-border: #276b45;
   --danger: #e5484d;
+  /* success/warning ile aynı tarif: çok koyu, doygunluğu düşük bir zemin
+     + orta tonlu bir kenarlık — rozet gibi küçük yüzeylerde okunur kalıp
+     ana --danger metin/ikon rengiyle çakışmıyor. */
+  --danger-bg: #2e1417;
+  --danger-border: #7a3338;
   --max-width: 880px;
   --max-width-wide: 1120px;
 }
@@ -870,11 +875,37 @@ body.page-home {
   padding: clamp(24px, 5vw, 40px) 0;
 }
 
-.featured-routes-grid,
-.routes-grid {
+.featured-routes-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 16px;
+}
+
+/* /rotalar listesi: auto-fit yerine SABİT sütun sayısı — masaüstünde 3,
+   tablette 2, mobilde 1 (aşağıdaki media query'ler) — auto-fit geniş
+   ekranda 4-5 sütuna çıkıp kartları fazla küçültebiliyordu. */
+.routes-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+@media (max-width: 900px) {
+  .routes-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 560px) {
+  .routes-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.routes-stats-line {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  color: var(--text-tertiary);
+  margin: 4px 0 0;
 }
 
 .route-card {
@@ -884,17 +915,25 @@ body.page-home {
   border-radius: 14px;
   background: var(--surface);
   overflow: hidden;
-  transition: border-color 0.15s ease, transform 0.15s ease;
+  transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
 }
 .route-card:hover,
 .route-card:focus-visible {
-  border-color: var(--border-strong);
-  transform: translateY(-2px);
+  border-color: var(--accent);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px -12px rgba(255, 122, 26, 0.35);
   text-decoration: none;
+}
+/* Dokunmatik cihazlarda :hover basılı tutulana kadar tetiklenmeyebilir/
+   kalkışta takılı kalabilir — :active ile dokunuşun kendisi de anında
+   aynı vurguyu versin. */
+.route-card:active {
+  border-color: var(--accent);
+  transform: translateY(-1px);
 }
 
 .route-card-map {
-  aspect-ratio: 16 / 10;
+  aspect-ratio: 400 / 220;
   background: linear-gradient(160deg, var(--surface-2) 0%, var(--surface) 100%);
   overflow: hidden;
 }
@@ -930,10 +969,62 @@ body.page-home {
 }
 
 .route-card-meta {
-  margin-top: auto;
-  padding-top: 6px;
   font-size: 13.5px;
   color: var(--text-secondary);
+}
+
+.route-card-badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+/* Zorluk rozeti — marka vurgu rengi (--accent) SADECE CTA/link için
+   ayrılıyor; "Orta" için onun yerine --warning (amber) kullanılıyor ki
+   rozet birincil eylem butonlarıyla karışmasın. */
+.route-badge {
+  display: inline-flex;
+  align-items: center;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  color: var(--text-secondary);
+  background: var(--surface-2);
+}
+.route-badge--kolay {
+  color: var(--success);
+  background: var(--success-bg);
+  border-color: var(--success-border);
+}
+.route-badge--orta {
+  color: var(--warning);
+  background: var(--warning-bg);
+  border-color: var(--warning-border);
+}
+.route-badge--ileri {
+  color: var(--danger);
+  background: var(--danger-bg);
+  border-color: var(--danger-border);
+}
+
+.route-warning-flag {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: var(--warning);
+}
+
+.route-card-rating {
+  font-size: 13.5px;
+  color: var(--text);
+}
+.route-rating-count {
+  color: var(--text-tertiary);
 }
 
 /* ---------------------------------------------------------------------

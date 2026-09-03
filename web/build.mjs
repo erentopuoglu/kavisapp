@@ -222,7 +222,9 @@ function encodeNumber(num) {
 // ---------------------------------------------------------------------
 async function fetchRoutes() {
   const params = new URLSearchParams({
-    select: "id,slug,title,description,distance_km,estimated_duration_min,region,path_geojson,rating_count,updated_at",
+    select:
+      "id,slug,title,description,distance_km,estimated_duration_min,region,path_geojson,rating_count," +
+      "avg_curve_quality,avg_road_surface,avg_scenery,avg_traffic,updated_at",
     is_hidden: "eq.false",
     order: "title.asc",
   });
@@ -237,8 +239,10 @@ async function fetchRoutes() {
 
 // Mapbox Static Images API'den PNG bayt dizisini indirir (BUILD anında,
 // bir kez) — canlı bir Mapbox URL'i <img>'e gömmek yerine, aşağıda diske
-// yazılıp self-hosted olarak servis edilir (bkz. dosya başı yorumu).
-async function downloadRouteMapImage(pathGeojson) {
+// yazılıp self-hosted olarak servis edilir (bkz. dosya başı yorumu). Her
+// rota için İKİ boyut üretiliyor: büyük olan (detay sayfası + og:image)
+// ve kart için küçük/kırpılmış olan (bkz. main() — CARD_MAP_SIZE).
+async function downloadRouteMapImage(pathGeojson, { width, height, strokeWidth = 4, padding = 40 }) {
   const coordinates = (pathGeojson?.coordinates ?? []).map(([longitude, latitude]) => ({
     latitude,
     longitude,
@@ -251,16 +255,76 @@ async function downloadRouteMapImage(pathGeojson) {
   // karaktere iniyor).
   const simplified = simplifyToMaxPoints(coordinates, 120);
   const encoded = encodePolyline(simplified);
-  const overlay = `path-4+ff7a1a-0.9(${encodeURIComponent(encoded)})`;
+  const overlay = `path-${strokeWidth}+ff7a1a-0.9(${encodeURIComponent(encoded)})`;
   const url =
-    `https://api.mapbox.com/styles/v1/mapbox/dark-v11/static/${overlay}/auto/1200x630` +
-    `?padding=40&access_token=${encodeURIComponent(mapboxToken)}`;
+    `https://api.mapbox.com/styles/v1/mapbox/dark-v11/static/${overlay}/auto/${width}x${height}` +
+    `?padding=${padding}&access_token=${encodeURIComponent(mapboxToken)}`;
 
   const res = await fetch(url);
   if (!res.ok) {
     throw new Error(`Mapbox static image başarısız (HTTP ${res.status})`);
   }
   return Buffer.from(await res.arrayBuffer());
+}
+
+// ---------------------------------------------------------------------
+// Kart üzerinde gösterilecek küçük sinyaller — hepsi description'ın
+// kendisinden ayrıştırılıyor (bkz. renderRouteDescription'daki AYNI blok
+// formatı) — ayrı bir DB alanı gerekmiyor, tek kaynak description kalıyor.
+// ---------------------------------------------------------------------
+
+// "Zorluk: Orta-İleri" gibi bir bloktan ham etiketi çıkarır, rozet rengi
+// için de bir "tier" belirler. Bileşik etiketlerde (ör. "Orta-İleri")
+// EN ZORLU kelime kazanır — bir motosiklet rotası için "iyimser" değil
+// "temkinli" varsayım daha doğru.
+function extractDifficulty(description) {
+  const match = (description ?? "").match(/^Zorluk:\s*(.+)$/m);
+  if (!match) return null;
+  const label = match[1].trim();
+  const normalized = label.toLocaleLowerCase("tr");
+  let tier = null;
+  if (normalized.includes("ileri")) tier = "ileri";
+  else if (normalized.includes("orta")) tier = "orta";
+  else if (normalized.includes("kolay")) tier = "kolay";
+  return { label, tier };
+}
+
+// "⚠️ UYARILAR" bloğundaki madde sayısı.
+function countWarnings(description) {
+  const blocks = (description ?? "").split(/\n\n+/);
+  const warningBlock = blocks.find((b) => b.startsWith("⚠️"));
+  if (!warningBlock) return 0;
+  return warningBlock
+    .split("\n")
+    .slice(1)
+    .map((l) => l.trim())
+    .filter((l) => l.startsWith("•")).length;
+}
+
+// src/features/routes/types.ts'teki overallAverage() ile AYNI formül —
+// uygulamanın kendi hesabıyla tutarlı kalması için (bkz. o dosyadaki
+// yorum: 4 kriterin ortalaması).
+function overallAverage(route) {
+  return (route.avg_curve_quality + route.avg_road_surface + route.avg_scenery + route.avg_traffic) / 4;
+}
+
+function difficultyBadgeHtml(description) {
+  const difficulty = extractDifficulty(description);
+  if (!difficulty) return "";
+  const tierClass = difficulty.tier ? ` route-badge--${difficulty.tier}` : "";
+  return `<span class="route-badge${tierClass}">${escapeHtml(difficulty.label)}</span>`;
+}
+
+function warningFlagHtml(description) {
+  const count = countWarnings(description);
+  if (count === 0) return "";
+  return `<span class="route-warning-flag">⚠ ${count} uyarı</span>`;
+}
+
+function ratingHtml(route) {
+  if (!route.rating_count) return "";
+  const avg = overallAverage(route).toFixed(1);
+  return `<span class="route-rating">★ ${avg} <span class="route-rating-count">(${route.rating_count})</span></span>`;
 }
 
 // ---------------------------------------------------------------------
@@ -477,16 +541,23 @@ function routeCardHtml(route) {
   ]
     .filter(Boolean)
     .join(" · ");
+
+  const badges = [difficultyBadgeHtml(route.description), warningFlagHtml(route.description)]
+    .filter(Boolean)
+    .join("\n    ");
+
   return `<a class="route-card" href="/rotalar/${route.slug}" data-regions="${escapeHtml(
     regionTokens(route.region).map((r) => r.toLocaleLowerCase("tr")).join("|")
   )}">
   <div class="route-card-map">
-    <img src="/rotalar/${route.slug}/harita.png" alt="" loading="lazy" onerror="this.parentElement.style.display='none'">
+    <img src="/rotalar/${route.slug}/harita-kart.png" alt="" width="400" height="220" loading="lazy" onerror="this.parentElement.style.display='none'">
   </div>
   <div class="route-card-body">
     ${route.region ? `<span class="route-card-region">${escapeHtml(route.region)}</span>` : ""}
     <h3 class="route-card-title">${escapeHtml(route.title)}</h3>
     ${meta ? `<span class="route-card-meta">${escapeHtml(meta)}</span>` : ""}
+    ${badges ? `<div class="route-card-badges">\n    ${badges}\n    </div>` : ""}
+    ${ratingHtml(route) ? `<div class="route-card-rating">${ratingHtml(route)}</div>` : ""}
   </div>
 </a>`;
 }
@@ -517,6 +588,7 @@ function routesListPage(routes) {
   const main = `  <div class="routes-header">
     <h1>Rotalar</h1>
     <p>Kavis topluluğunun derlediği ${routes.length} motosiklet rotası — bölgeye göre filtreleyin, mesafe ve süresini görün, detayına girin.</p>
+    <p class="routes-stats-line">${escapeHtml(routesStatsLine(routes))}</p>
     <div class="route-filter" role="group" aria-label="Bölgeye göre filtrele">
       ${filterButtons}
     </div>
@@ -615,11 +687,16 @@ ${renderRouteDescription(route.description)}
   });
 }
 
-function statsStripHtml(routes) {
+function routeAggregates(routes) {
   const provinceCount = new Set(routes.flatMap((r) => regionTokens(r.region))).size;
   const totalKm = Math.round(routes.reduce((sum, r) => sum + (r.distance_km ?? 0), 0));
+  return { count: routes.length, provinceCount, totalKm };
+}
+
+function statsStripHtml(routes) {
+  const { count, provinceCount, totalKm } = routeAggregates(routes);
   return `<div class="stat-item">
-      <span class="stat-value">${routes.length}</span>
+      <span class="stat-value">${count}</span>
       <span class="stat-label">Rota</span>
     </div>
     <div class="stat-item">
@@ -630,6 +707,14 @@ function statsStripHtml(routes) {
       <span class="stat-value">${totalKm.toLocaleString("tr-TR")} km</span>
       <span class="stat-label">Toplam Rota Uzunluğu</span>
     </div>`;
+}
+
+// /rotalar sayfası için kompakt tek satırlık özet ("32 rota · 26 il ·
+// toplam 4.758 km") — statsStripHtml'in büyük 3 kutulu haliyle AYNI
+// sayıları paylaşıyor (routeAggregates), sadece daha küçük bir yüzeyde.
+function routesStatsLine(routes) {
+  const { count, provinceCount, totalKm } = routeAggregates(routes);
+  return `${count} rota · ${provinceCount} il · toplam ${totalKm.toLocaleString("tr-TR")} km`;
 }
 
 // Öne çıkan rotalar: şimdilik gerçek bir kullanıcı puanı sinyali yok
@@ -699,19 +784,36 @@ async function main() {
     console.warn("[build] Supabase bağlantısı yok — rota vitrini ÜRETİLMEYECEK.");
   }
 
-  // --- her rota için harita görselini indir (best-effort — biri
-  // başarısız olursa build durmaz, o rota haritasız kalır) ---
+  // --- her rota için harita görsellerini indir (best-effort — biri
+  // başarısız olursa build durmaz, o rota haritasız kalır). İki boyut:
+  // büyük (detay sayfası + og:image) ve kart için küçük/kırpılmış olan
+  // (bkz. CARD_MAP_SIZE — .route-card-map'in CSS aspect-ratio'suyla
+  // birebir aynı oran, gereksiz object-fit kırpması olmasın diye). ---
+  const CARD_MAP_SIZE = { width: 400, height: 220 };
   if (routes.length && mapboxToken) {
     for (const route of routes) {
+      const routeDir = join(distDir, "rotalar", route.slug);
       try {
-        const image = await downloadRouteMapImage(route.path_geojson);
+        const image = await downloadRouteMapImage(route.path_geojson, { width: 1200, height: 630 });
         if (image) {
-          const routeDir = join(distDir, "rotalar", route.slug);
           mkdirSync(routeDir, { recursive: true });
           writeFileSync(join(routeDir, "harita.png"), image);
         }
       } catch (err) {
         console.warn(`[build] "${route.title}" için harita indirilemedi: ${err.message}`);
+      }
+      try {
+        const cardImage = await downloadRouteMapImage(route.path_geojson, {
+          ...CARD_MAP_SIZE,
+          strokeWidth: 3,
+          padding: 24,
+        });
+        if (cardImage) {
+          mkdirSync(routeDir, { recursive: true });
+          writeFileSync(join(routeDir, "harita-kart.png"), cardImage);
+        }
+      } catch (err) {
+        console.warn(`[build] "${route.title}" için kart haritası indirilemedi: ${err.message}`);
       }
     }
   }
